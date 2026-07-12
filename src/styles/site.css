@@ -1,0 +1,9 @@
+/* nanohype docs — the per-site touch: just the typefaces (Inter + JetBrains Mono,
+   matching nanohype.dev). The void ground + beam palette come from
+   @shuttering/starlight; this is all the site itself owns. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-sans-face: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono-face: 'JetBrains Mono', ui-monospace, monospace;
+}

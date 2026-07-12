@@ -1,0 +1,131 @@
+---
+// nanohype docs hero — replaces Starlight's oversized splash. Echoes nanohype.dev:
+// a beam pixel-node eyebrow, the wordmark as the semantic H1, a scaffold line, and
+// beam-lit actions. Reads the page's own title/tagline so the H1 stays semantic and
+// owns the #_top skip anchor.
+const data = Astro.locals.starlightRoute?.entry?.data ?? {};
+const title = data.title ?? 'nanohype';
+const tagline =
+  data.hero?.tagline ??
+  'The k8s-native software factory: a template + composite catalog, a factory client that ships merge-gated software, and the substrate it deploys onto.';
+const scaffold = 'npx @nanohype/sdk scaffold';
+---
+
+<section class="nh-hero" aria-labelledby="_top">
+  <div class="nh-eyebrow">
+    <span class="nh-node" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </span>
+    <span>agent factory</span>
+  </div>
+
+  <h1 id="_top" class="nh-title">{title}</h1>
+
+  <p class="nh-tagline">{tagline}</p>
+
+  <div class="nh-term" aria-label="scaffold command">
+    <code><span class="nh-prompt">$</span> {scaffold}</code>
+  </div>
+
+  <div class="nh-actions">
+    <a class="nh-btn nh-btn--key" href="/quickstart/">Quickstart <span aria-hidden="true">→</span></a>
+    <a class="nh-btn nh-btn--ghost" href="https://github.com/nanohype"
+      >GitHub <span aria-hidden="true">↗</span></a
+    >
+  </div>
+</section>
+
+<style>
+  .nh-hero {
+    text-align: center;
+    padding: 1.5rem 0 0.5rem;
+  }
+  .nh-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--sl-font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+  /* the beam 2×2 pixel-node mark */
+  .nh-node {
+    display: grid;
+    grid-template-columns: repeat(2, 5px);
+    gap: 2px;
+  }
+  .nh-node span {
+    width: 5px;
+    height: 5px;
+    background: var(--sl-color-accent);
+    border-radius: 1px;
+  }
+  .nh-node span:nth-child(2),
+  .nh-node span:nth-child(3) {
+    opacity: 0.5;
+  }
+  .nh-title {
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0.9rem 0 0;
+  }
+  .nh-tagline {
+    color: var(--sl-color-gray-2);
+    max-width: 46ch;
+    margin: 0.9rem auto 0;
+    line-height: 1.6;
+  }
+  .nh-term {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 1.6rem;
+    padding: 0.5rem 0.9rem;
+    background: color-mix(in oklab, var(--sl-color-accent) 6%, var(--sl-color-bg));
+    border: 1px solid color-mix(in oklab, var(--sl-color-accent) 18%, transparent);
+    border-radius: 6px;
+    font-family: var(--sl-font-mono);
+    font-size: 0.82rem;
+  }
+  .nh-prompt {
+    color: var(--sl-color-accent);
+    margin-inline-end: 0.5rem;
+  }
+  .nh-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1.75rem;
+  }
+  .nh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-family: var(--sl-font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: all 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .nh-btn--key {
+    background: var(--sl-color-accent);
+    color: var(--sl-color-bg);
+    font-weight: 600;
+  }
+  .nh-btn--key:hover {
+    filter: brightness(1.08);
+  }
+  .nh-btn--ghost {
+    color: var(--sl-color-gray-1);
+    border: 1px solid var(--sl-color-hairline-light);
+  }
+  .nh-btn--ghost:hover {
+    border-color: color-mix(in oklab, var(--sl-color-accent) 40%, transparent);
+    color: var(--sl-color-white);
+  }
+</style>

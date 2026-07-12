@@ -1,0 +1,46 @@
+---
+title: nanohype
+description: The k8s-native software factory — a template + composite catalog, a factory client that ships merge-gated software, and the substrate it deploys onto.
+template: splash
+hero:
+  tagline: A template + composite catalog, a factory client that ships merge-gated software, and the k8s-native substrate it deploys onto — one system, from idea to running tenant.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+nanohype is a **k8s-native software factory**. Every repo in the org plays one of
+three roles: **factory context** (what the factory consumes when designing work),
+**factory output** (what it produces), or the **factory itself** (the orchestrator).
+The result: an idea becomes a production tenant — chart, tenant boundary, and GitOps
+entry — deployed on the client's own cloud.
+
+## The shape of it
+
+<CardGrid>
+  <Card title="The catalog" icon="seti:config">
+    Templates and composites in [`nanohype`](https://github.com/nanohype/nanohype) —
+    the factory's vocabulary. The SDK and MCP server render them; the standards are
+    the bar every output is graded against.
+  </Card>
+  <Card title="The factory" icon="rocket">
+    [`fab`](https://github.com/nanohype/fab) turns an intake brief into shipped,
+    merge-gated software — an 80-role roster organized by phase, four transports, and
+    an evidence-bound merge gate.
+  </Card>
+  <Card title="The platform" icon="puzzle">
+    [`eks-agent-platform`](https://github.com/nanohype/eks-agent-platform) is the
+    k8s-native control plane. A `Platform` CR draws a tenant boundary: IRSA,
+    ResourceQuota, NetworkPolicy, AppProject.
+  </Card>
+  <Card title="The substrate" icon="setting">
+    [`landing-zone`](https://github.com/nanohype/landing-zone) (OpenTofu/Terragrunt
+    AWS substrate), [`eks-gitops`](https://github.com/nanohype/eks-gitops) (the addon
+    catalog), and [`eks-fleet`](https://github.com/nanohype/eks-fleet) (the cluster
+    factory).
+  </Card>
+</CardGrid>
+
+## Where to start
+
+New here? Read the [Overview](/factory/) for the mental model, then run the
+[Quickstart](/quickstart/) to scaffold your first artifact from the catalog.
