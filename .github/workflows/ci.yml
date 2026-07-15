@@ -13,7 +13,16 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Supply-chain gate. osv-scanner checks the committed pnpm-lock.yaml against
+      # the OSV database and exits non-zero on a known vulnerability: an
+      # endpoint-independent, maintained hard gate. Pinned to an exact version.
+      - name: audit (osv-scanner)
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        with:
+          scan-args: |-
+            --recursive
+            ./
       - run: pnpm build
