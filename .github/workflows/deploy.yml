@@ -13,6 +13,13 @@ concurrency:
   group: deploy-docs
   cancel-in-progress: true
 
+env:
+  # Read @shuttering/error-pages (and its @shuttering/tokens dep) from GitHub
+  # Packages (see .npmrc). A PAT with read:packages on the shuttering org,
+  # stored as a repo/org Actions secret. @shuttering/starlight still comes from
+  # npmjs (pinned in pnpm.overrides), so npmjs stays the default registry.
+  NODE_AUTH_TOKEN: ${{ secrets.SHUTTERING_NPM_TOKEN }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
