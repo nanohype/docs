@@ -13,7 +13,9 @@
     "build": "astro build",
     "postbuild": "shuttering-error-pages check dist/500.html --status 500",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "lint": "npx --yes @biomejs/biome@2.5.3 check .",
+    "format": "npx --yes @biomejs/biome@2.5.3 check --write ."
   },
   "dependencies": {
     "@astrojs/starlight": "^0.41.3",
