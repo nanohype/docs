@@ -4,11 +4,11 @@
 // beam-lit actions. Reads the page's own title/tagline so the H1 stays semantic and
 // owns the #_top skip anchor.
 const data = Astro.locals.starlightRoute?.entry?.data ?? {};
-const title = data.title ?? 'nanohype';
+const title = data.title ?? "nanohype";
 const tagline =
   data.hero?.tagline ??
-  'The k8s-native software factory: a template + composite catalog, a factory client that ships merge-gated software, and the substrate it deploys onto.';
-const scaffold = 'npx @nanohype/sdk scaffold';
+  "The k8s-native software factory: a template + composite catalog, a factory client that ships merge-gated software, and the substrate it deploys onto.";
+const scaffold = "npx @nanohype/sdk scaffold";
 ---
 
 <section class="nh-hero" aria-labelledby="_top">

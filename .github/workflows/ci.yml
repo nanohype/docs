@@ -33,3 +33,8 @@ jobs:
             --recursive
             ./
       - run: pnpm build
+      # Lint / format gate. Biome (pinned via npx to avoid a private-registry
+      # lockfile change) checks and formats the source in one pass, exiting
+      # non-zero on any lint violation or unformatted file.
+      - name: lint (biome)
+        run: pnpm run lint
