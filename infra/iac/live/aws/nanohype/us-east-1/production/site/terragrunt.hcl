@@ -49,9 +49,10 @@ inputs = {
   name_prefix      = "nanohype-docs-"
   site_bucket_name = "nanohype-docs-site"
 
-  # The docs deploy role has always been owned by this site component (the local
-  # component created aws_iam_role.deploy); keep that ownership.
-  create_deploy_role = true
+  # nanohype's publish role lives in the standalone deploy component in nanohype.dev —
+  # one role shared across nanohype.dev + docs.nanohype.dev — so this site module must
+  # not create a colliding one. CI assumes it via the AWS_DEPLOY_ROLE_ARN variable.
+  create_deploy_role = false
   github_repository  = "nanohype/docs"
 
   content_security_policy = local.content_security_policy
