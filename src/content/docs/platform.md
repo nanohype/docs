@@ -12,7 +12,8 @@ k8s-native control plane.
 A `Platform` custom resource draws the tenant boundary. The operator reconciles it
 into:
 
-- **IRSA / Pod Identity** — a scoped AWS identity for the tenant's workloads
+- **Pod Identity** — a scoped AWS identity, bound to the tenant's service account
+  through the EKS API. No role-arn annotation, no OIDC provider
 - **ResourceQuota** — the tenant's compute envelope
 - **NetworkPolicy** — default-deny egress with the allowances the app declares
 - **AppProject** — the ArgoCD project the tenant deploys within

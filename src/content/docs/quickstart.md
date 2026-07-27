@@ -26,7 +26,7 @@ npx @nanohype/sdk scaffold k8s-app-tenant --name my-app
 Every factory-built app ships as the same trio:
 
 1. A **Helm chart** in `<app>/chart/` — the application.
-2. A **`Platform` CR** — the tenant boundary (IRSA, ResourceQuota, NetworkPolicy, AppProject).
+2. A **`Platform` CR** — the tenant boundary (Pod Identity, ResourceQuota, NetworkPolicy, AppProject).
 3. An **ApplicationSet entry** referenced by the right GitOps repo.
 
 ## What comes next
