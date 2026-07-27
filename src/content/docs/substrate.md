@@ -12,12 +12,15 @@ is the single most useful thing to get right.
 | ------------------------------ | -------------------- | ------------------------------------------------------ |
 | Cloud substrate (AWS)          | `landing-zone`       | VPC, base IAM, KMS, DNS, cluster vending, per-app infra |
 | Cluster addons & policies      | `eks-gitops`         | cert-manager, external-secrets, Kyverno, observability |
-| Cluster factory (the hub)      | `eks-fleet`          | vends EKS clusters via Crossplane → CAPA day-2          |
+| Cluster factory (the hub)      | `eks-fleet`          | vends EKS clusters via Crossplane + provider-opentofu   |
 | Local dev cluster              | `kx`                 | kind, mirrors the eks-gitops chart catalog             |
 
 `landing-zone` is **OpenTofu + Terragrunt**, AWS-only. `eks-gitops` is an ArgoCD
 App-of-Apps addon catalog. `eks-fleet` vends clusters from a namespaced `Cluster`
-resource the way the platform vends tenants.
+resource the way the platform vends tenants: a Crossplane v2 composition renders a
+`provider-opentofu` `Workspace` that runs the `landing-zone` modules, then writes the
+cluster's endpoint, CA, and OIDC issuer back to the `Cluster`'s status. The IaC stays
+the source of truth; Crossplane is the ordering API on top of it.
 
 ## Where boundaries sit
 

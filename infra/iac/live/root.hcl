@@ -35,9 +35,8 @@ inputs = {
 
 # --- Provider ---
 # One AWS provider, anchored on us-east-1 — the region CloudFront's ACM cert must
-# live in, and where SES inbound runs, so the whole surface collapses to it. The
-# default_tags carry the org tagging standard onto every resource a component
-# creates.
+# live in, so the whole surface collapses to it. The default_tags carry the org
+# tagging standard onto every resource a component creates.
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"

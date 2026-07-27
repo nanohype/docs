@@ -42,7 +42,9 @@ Claude Platform on AWS.
 
 ## The standards
 
-The bar every output is graded against lives in the catalog's standards — language
-toolchain, version currency, the platform-tenant contract, the LLM policy, and the
-quality rubric's ten dimensions. Anyone reading the public surface gets the bar
-**and** a working factory.
+The bar every output is graded against lives in the catalog's ten standards — the
+language toolchain, version currency, the platform-tenant contract, the LLM policy,
+the quality rubric's ten dimensions, the testing rubric, observability and SLOs,
+resource naming, resource tagging, and the SEO baseline. See
+[Templates & catalog](/catalog/) for what each one covers. Anyone reading the public
+surface gets the bar **and** a working factory.

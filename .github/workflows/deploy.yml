@@ -23,8 +23,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Dormant until the docs infra is applied and the deploy role ARN is set as a
-    # repository variable (see the docs.nanohype.dev OpenTofu component).
+    # Skips where no deploy role is configured — forks and mirrors. The ARN comes
+    # from the docs.nanohype.dev site component in infra/iac, set as a repository
+    # variable.
     if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
     steps:
       - uses: actions/checkout@v4

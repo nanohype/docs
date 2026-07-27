@@ -4,7 +4,8 @@ description: The canonical nanohype repos and the role each plays in the factory
 ---
 
 Every repo in the org is one of three things: **factory context**, **factory
-output**, or the **factory itself**.
+output**, or the **factory itself**. Here are the public ones — the GitOps state
+repos the portal drives are private.
 
 ## Factory context & the factory
 
@@ -19,6 +20,8 @@ output**, or the **factory itself**.
 | `kx`                 | Local kind workspace mirroring the eks-gitops catalog               |
 | `portal`             | Self-hosted ops portal over the substrate                          |
 | `cloudgov`           | AWS governance CLI (IAM, cost, posture, drift)                     |
+| `homebrew-tap`       | Homebrew tap that publishes the nanohype CLIs                      |
+| `docs`               | This site — the public front door                                  |
 
 ## Factory output
 
