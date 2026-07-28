@@ -8,19 +8,44 @@ how it lands as a Platform tenant.
 
 ## Prerequisites
 
-- Node.js (latest LTS) and `pnpm`
-- Access to the catalog via the `@nanohype/sdk` package or the `@nanohype/mcp` server
+- Node.js (latest LTS)
+- The `@nanohype/sdk` package, or the `@nanohype/mcp` server if you are driving this from an agent
 
 ## Scaffold from the catalog
+
+The SDK ships a `nanohype` binary. Install it once:
+
+```sh
+npm install -g @nanohype/sdk
+```
 
 Pick a template or composite and render it:
 
 ```sh
 # list what the catalog offers
-npx @nanohype/sdk list
+nanohype list
 
-# scaffold a new tenant app
-npx @nanohype/sdk scaffold k8s-app-tenant --name my-app
+# and the composites
+nanohype list --composites
+
+# scaffold a new tenant app into ./my-app
+nanohype scaffold k8s-app-tenant \
+  --var AppName=my-app \
+  --var AppMetric=my_app \
+  --var Tenant=growth \
+  --var Image=ghcr.io/your-org/my-app \
+  -o my-app
+```
+
+`AppName`, `Tenant` and `Image` are required. `AppMetric` is the metric-name
+prefix and defaults to `AppName` — single-word names need nothing, but a
+hyphenated name has to be given in its underscored form, since metric names
+cannot contain dashes.
+
+Without a global install, run it through the package:
+
+```sh
+npx --package=@nanohype/sdk nanohype list
 ```
 
 Every factory-built app ships as the same trio:
