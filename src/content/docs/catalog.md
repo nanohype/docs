@@ -34,7 +34,7 @@ instead. (This docs site is one such case.)
 
 ## Standards
 
-Ten guardrails live in `standards/*.json`. They're what the merge gate grades
+The guardrails live in `standards/*.json`. They're what the merge gate grades
 against:
 
 | Standard                    | Covers                                                            |
@@ -46,6 +46,7 @@ against:
 | `quality-rubric-dimensions` | the ten grading dimensions + the canonical lens for each          |
 | `testing-rubric`            | the Testing-Trophy distribution and the coverage floor            |
 | `observability-slo`         | RED/USE, the golden signals, burn-rate error budgets              |
+| `telemetry-pipeline`        | the OTLP waist every workload emits through, and the tier it lands in |
 | `resource-naming`           | the naming grammar for cloud and k8s resources                    |
 | `resource-tagging`          | the org-wide tag / label / OTel-attribute taxonomy                |
 | `seo-baseline`              | one canonical origin + the discovery artifacts a public site ships |
