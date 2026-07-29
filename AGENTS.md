@@ -24,7 +24,7 @@ pnpm dev
 - Describe the design state, never migration history (greenfield doctrine)
 - Identity model is **EKS Pod Identity**, not IRSA — no role-arn annotation claims
 - `eks-fleet` vends via Crossplane + provider-opentofu, not CAPA
-- Standards: there are **ten** in `nanohype/standards/*.json` — never list five
+- Standards: count `nanohype/standards/*.json` before claiming how many — never guess, and never list a subset as if it were all of them
 - Public repo table should name this repo and `homebrew-tap` when claiming coverage
 
 ## Infra
