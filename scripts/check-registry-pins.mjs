@@ -3,26 +3,36 @@
  * check-registry-pins.mjs — assert the lockfile still resolves @shuttering
  * packages from the registry each one actually lives in.
  *
- * The `@shuttering` scope is split across two registries. `.npmrc` routes the
- * whole scope to GitHub Packages, which is right for `error-pages` and
- * `tokens` — but `@shuttering/starlight` is published to npmjs, and a copy of
- * 0.2.0 also exists on GitHub Packages *with different bytes*. Which registry
- * the lockfile records therefore decides what gets installed.
+ * The `@shuttering` scope is split across two registries, and it is a hole
+ * rather than a conflict. `.npmrc` routes the whole scope to GitHub Packages,
+ * which is where every package in it lives *except* `@shuttering/starlight` —
+ * that one is published to npmjs and is absent from GitHub Packages entirely
+ * (404, "does not exist under owner"). npm's registry routing is per-scope
+ * with no per-package escape, so the one package that is not where the scope
+ * points has nothing to resolve through.
  *
  * `pnpm.overrides` holds starlight to its npmjs tarball URL. That override is
  * load-bearing and pnpm does not keep it: 10.32.1 rewrites the URL form to a
  * plain `0.2.0` on any lockfile regeneration — a full install and
- * `pnpm update <pkg> --lockfile-only` alike. The rewritten entry resolves
- * through the scope routing to GitHub Packages and fails integrity against the
- * hash the lockfile still carries.
+ * `pnpm update <pkg> --lockfile-only` alike. The rewritten entry has no
+ * `tarball:` field left, so it resolves through the scope routing to GitHub
+ * Packages and 404s.
+ *
+ * Declaring the URL as the `dependencies` specifier instead of an override
+ * does not survive either; this was tried. pnpm canonicalises a recognisable
+ * npmjs registry-tarball URL to its plain version wherever it is declared. The
+ * `specifier:` line keeps the URL — which is exactly why this check does not
+ * look there — while the package key and `resolution:` collapse to the bare
+ * form. The override is not the fragile part; the URL form is.
  *
  * That failure is silent locally and red in CI, several minutes after a push,
- * with an error about checksums that names neither the override nor the
- * registry split. This check turns it into an immediate, local, explained one.
+ * with a 404 that names neither the override nor the registry split. This
+ * check turns it into an immediate, local, explained one.
  *
  * It does not fix the split — that is a publishing decision, not a docs-repo
- * one. It stops a routine version bump from silently repointing a dependency
- * at a different registry while nobody is looking.
+ * one, and the durable fix is for the whole scope to be resolvable from one
+ * registry. It stops a routine version bump from silently repointing a
+ * dependency at a registry that does not have it.
  *
  * Usage: node scripts/check-registry-pins.mjs
  */
@@ -57,8 +67,8 @@ const REQUIRED_PINS = [
       "resolution: {tarball: https://registry.npmjs.org/@shuttering/starlight/-/starlight-0.2.0.tgz}",
     forbiddenKey: "'@shuttering/starlight@0.2.0'",
     why:
-      "published to npmjs; the copy of this version on GitHub Packages has different bytes, " +
-      "and .npmrc would otherwise route the whole @shuttering scope there",
+      "published to npmjs and absent from GitHub Packages, where .npmrc would " +
+      "otherwise route the whole @shuttering scope",
   },
 ];
 
@@ -84,9 +94,13 @@ for (const { pkg, override, resolution, forbiddenKey, why } of REQUIRED_PINS) {
         `    Expected to find:\n      ${resolution}\n` +
         "    pnpm rewrites the URL form to a plain version on any lockfile\n" +
         "    regeneration — a full install and `pnpm update <pkg> --lockfile-only`\n" +
-        "    alike. The rewritten entry resolves through .npmrc's scope routing to\n" +
-        "    GitHub Packages, whose copy of this version has different bytes, and\n" +
-        "    the install fails on integrity.",
+        "    alike. The rewritten entry keeps no `tarball:` field, so it resolves\n" +
+        "    through .npmrc's scope routing to GitHub Packages, which does not\n" +
+        "    carry this package at all, and the install 404s.\n" +
+        "\n" +
+        "    Restore it with the override in package.json, then regenerate. Moving\n" +
+        "    the URL into `dependencies` does not help — pnpm canonicalises an\n" +
+        "    npmjs tarball URL wherever it is declared.",
     );
   }
 
