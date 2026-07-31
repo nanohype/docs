@@ -22,6 +22,14 @@ jobs:
         with:
           node-version: '24'
           cache: pnpm
+      # Before install, so the failure names the cause. The @shuttering scope is
+      # split across two registries and one entry is held to npmjs by a
+      # pnpm.overrides tarball URL that pnpm drops on any lockfile
+      # regeneration. Without this, the symptom is an ERR_PNPM_TARBALL_INTEGRITY
+      # from the install step that mentions neither the override nor the split.
+      - name: registry pins intact
+        run: node scripts/check-registry-pins.mjs
+
       - run: pnpm install --frozen-lockfile
       # Supply-chain gate. osv-scanner checks the committed pnpm-lock.yaml against
       # the OSV database and exits non-zero on a known vulnerability: an
