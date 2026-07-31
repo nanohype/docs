@@ -1,7 +1,13 @@
 name: deploy
 
+# Runs after `ci` succeeds, not alongside it. Both workflows previously
+# triggered on push to main with nothing between them, so a commit that failed
+# lint or osv-scanner still shipped to production as long as `pnpm build`
+# exited 0 — the supply-chain gate ran, and its verdict reached no one.
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -23,12 +29,24 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Skips where no deploy role is configured — forks and mirrors. The ARN comes
-    # from the docs.nanohype.dev site component in infra/iac, set as a repository
-    # variable.
-    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    # Two conditions. The role check skips forks and mirrors, where no deploy
+    # role is configured — the ARN comes from the docs.nanohype.dev site
+    # component in infra/iac, set as a repository variable. The conclusion check
+    # is the gate: `workflow_run` fires on *completion*, success or failure, so
+    # without it this would deploy precisely the commits CI just rejected.
+    # workflow_dispatch carries no workflow_run payload, so it is named
+    # explicitly rather than left to evaluate against an absent field.
+    if: >-
+      vars.AWS_DEPLOY_ROLE_ARN != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
     steps:
+      # `workflow_run` checks out the default branch at HEAD, not the commit
+      # that triggered the run. On a busy main those differ, and the deploy
+      # would ship a commit CI never looked at.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - uses: pnpm/action-setup@v4
 
