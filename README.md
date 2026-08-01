@@ -18,8 +18,7 @@ tenant model, and the substrate (landing-zone / eks-gitops / eks-fleet).
 ## Develop
 
 ```bash
-# @shuttering/error-pages resolves from GitHub Packages (see .npmrc)
-pnpm install
+pnpm install         # no credentials needed; every dependency is public
 pnpm dev             # Astro dev server
 pnpm build           # prebuild error pages + astro build + postbuild check
 pnpm lint            # biome check (lint + format)

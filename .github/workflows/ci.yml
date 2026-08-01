@@ -5,13 +5,6 @@ on:
     branches: [main]
   pull_request:
 
-env:
-  # Read @shuttering/error-pages (and its @shuttering/tokens dep) from GitHub
-  # Packages (see .npmrc). A PAT with read:packages on the shuttering org,
-  # stored as a repo/org Actions secret. @shuttering/starlight still comes from
-  # npmjs (pinned in pnpm.overrides), so npmjs stays the default registry.
-  NODE_AUTH_TOKEN: ${{ secrets.SHUTTERING_NPM_TOKEN }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,14 +15,6 @@ jobs:
         with:
           node-version: '24'
           cache: pnpm
-      # Before install, so the failure names the cause. The @shuttering scope is
-      # split across two registries and one entry is held to npmjs by a
-      # pnpm.overrides tarball URL that pnpm drops on any lockfile
-      # regeneration. Without this, the symptom is an ERR_PNPM_TARBALL_INTEGRITY
-      # from the install step that mentions neither the override nor the split.
-      - name: registry pins intact
-        run: node scripts/check-registry-pins.mjs
-
       - run: pnpm install --frozen-lockfile
       # Supply-chain gate. osv-scanner checks the committed pnpm-lock.yaml against
       # the OSV database and exits non-zero on a known vulnerability: an
@@ -41,8 +26,8 @@ jobs:
             --recursive
             ./
       - run: pnpm build
-      # Lint / format gate. Biome (pinned via npx to avoid a private-registry
-      # lockfile change) checks and formats the source in one pass, exiting
+      # Lint / format gate. Biome, pinned via npx, checks and formats the source
+      # in one pass, exiting
       # non-zero on any lint violation or unformatted file.
       - name: lint (biome)
         run: pnpm run lint
