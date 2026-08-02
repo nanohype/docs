@@ -46,6 +46,22 @@ export default defineConfig({
           ],
         },
         {
+          // Pulled from the catalog repo's docs/ at build time — see src/lib/guides.ts.
+          label: "Building against it",
+          items: [
+            { label: "Start here", link: "/building/" },
+            { label: "Platform Reference", link: "/building/platform-reference/" },
+            { label: "Catalog reference", link: "/building/catalog-reference/" },
+            { label: "Composites", link: "/building/composites/" },
+            { label: "Production readiness", link: "/building/production-readiness/" },
+            { label: "Authoring a template", link: "/building/authoring-a-template/" },
+            { label: "Template contract", link: "/building/template-contract/" },
+            { label: "Composite contract", link: "/building/composite-contract/" },
+            { label: "Building a consumer", link: "/building/consumer-guide/" },
+            { label: "The pattern", link: "/building/reference-pattern/" },
+          ],
+        },
+        {
           // Generated from nanohype/nanohype at build time — see src/lib/catalog.ts.
           // Index pages only: the ~130 detail pages hang off them and are reached by
           // search and by link, not by a sidebar nobody could scan.
