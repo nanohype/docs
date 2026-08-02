@@ -1,0 +1,149 @@
+---
+import type { SchemaField } from "../lib/resources.ts";
+/**
+ * Renders one level of a resource's spec schema, and recurses into nested
+ * objects and array items.
+ *
+ * Nesting is rendered as nesting rather than as a flat dotted-path table: a
+ * reader deciding whether they need `scaling.queueUrl` is deciding whether they
+ * need `scaling` at all, and a flat table makes that a lookup instead of a
+ * glance. Below the second level the tree collapses into a details element —
+ * `identity.capabilities[].resources` is real, and worth publishing, but it is
+ * not what anyone is reading the page for.
+ */
+import Self from "./SchemaFields.astro";
+
+interface Props {
+  fields: SchemaField[];
+  depth?: number;
+}
+
+const { fields, depth = 0 } = Astro.props;
+
+/** Below this, children are folded away rather than shown inline. */
+const FOLD_AT = 1;
+---
+
+<ul class="fields" data-depth={depth}>
+  {
+    fields.map((field) => (
+      <li>
+        <p class="sig">
+          <code class="name">{field.name}</code>
+          <span class="type">{field.type}</span>
+          {field.required ? <span class="req">required</span> : null}
+          {field.default !== undefined ? (
+            <span class="def">
+              default <code>{JSON.stringify(field.default)}</code>
+            </span>
+          ) : null}
+        </p>
+
+        {field.enum ? (
+          <p class="enum">
+            {field.enum.map((value, index) => (
+              <>
+                {index > 0 ? <span aria-hidden="true"> · </span> : null}
+                <code>{value}</code>
+              </>
+            ))}
+          </p>
+        ) : null}
+
+        {field.description ? <p class="desc">{field.description}</p> : null}
+
+        {field.children.length > 0 ? (
+          depth < FOLD_AT ? (
+            <Self fields={field.children} depth={depth + 1} />
+          ) : (
+            <details>
+              <summary>
+                {field.children.length} field{field.children.length === 1 ? "" : "s"} under{" "}
+                <code>{field.name}</code>
+              </summary>
+              <Self fields={field.children} depth={depth + 1} />
+            </details>
+          )
+        ) : null}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .fields {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .fields[data-depth="0"] > li + li {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--sl-color-hairline);
+    padding-top: 1.5rem;
+  }
+
+  /* Nested levels indent against a rule, so depth is visible without counting. */
+  .fields:not([data-depth="0"]) {
+    margin-top: 0.75rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--sl-color-hairline);
+  }
+
+  .fields:not([data-depth="0"]) > li + li {
+    margin-top: 1rem;
+  }
+
+  .sig {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .name {
+    font-weight: 600;
+  }
+
+  .type,
+  .req,
+  .def {
+    font-size: var(--sl-text-xs);
+  }
+
+  .type {
+    color: var(--sl-color-text-accent);
+    font-family: var(--sl-font-mono);
+  }
+
+  .req {
+    color: var(--sl-color-text-invert);
+    background: var(--sl-color-text-accent);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .def,
+  .enum {
+    color: var(--sl-color-gray-3);
+  }
+
+  .desc,
+  .enum {
+    margin: 0.4rem 0 0;
+    font-size: var(--sl-text-sm);
+  }
+
+  details {
+    margin-top: 0.75rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+</style>

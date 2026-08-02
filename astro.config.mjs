@@ -76,6 +76,9 @@ export default defineConfig({
           label: "The platform",
           items: [
             { label: "Platform tenants", link: "/platform/" },
+            // Generated from the CRDs eks-agent-platform ships — see
+            // src/lib/resources.ts. Index only; the per-kind pages hang off it.
+            { label: "Resource reference", link: "/platform/resources/" },
             { label: "The substrate", link: "/substrate/" },
             { label: "The atlas", link: "/atlas/" },
           ],

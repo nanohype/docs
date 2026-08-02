@@ -78,11 +78,23 @@ jobs:
           repository: nanohype/.github
           path: .atlas
 
+      # The /platform/resources/ reference is generated from the shipped CRDs,
+      # and postbuild checks every apiVersion and kind on the site against them.
+      # Sparse: the chart's crds/ directory is the entire input.
+      - name: Checkout the platform CRDs
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/eks-agent-platform
+          path: .platform
+          sparse-checkout: charts/operator/crds
+          sparse-checkout-cone-mode: false
+
       - name: Build
         run: pnpm build
         env:
           NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
+          NANOHYPE_CRDS_DIR: ${{ github.workspace }}/.platform/charts/operator/crds
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

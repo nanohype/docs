@@ -57,10 +57,22 @@ jobs:
         with:
           repository: nanohype/.github
           path: .atlas
+      # The /platform/resources/ reference is generated from the CRDs the
+      # operator ships, and postbuild checks every apiVersion and kind the whole
+      # site prints against them. Sparse, because the chart's crds/ directory is
+      # the entire input — a full checkout would only invite reading more of it.
+      - name: checkout the platform CRDs
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/eks-agent-platform
+          path: .platform
+          sparse-checkout: charts/operator/crds
+          sparse-checkout-cone-mode: false
       - run: pnpm build
         env:
           NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
+          NANOHYPE_CRDS_DIR: ${{ github.workspace }}/.platform/charts/operator/crds
       # Lint / format gate. Biome, pinned via npx, checks and formats the source
       # in one pass, exiting
       # non-zero on any lint violation or unformatted file.

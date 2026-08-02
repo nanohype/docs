@@ -1,0 +1,115 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadPlatformResources, resourceSlug } from "../../../lib/resources.ts";
+
+const groups = await loadPlatformResources();
+const total = groups.reduce((sum, group) => sum + group.resources.length, 0);
+const repos = [...new Set(groups.flatMap((group) => group.resources.map((r) => r.repo)))].sort();
+
+/**
+ * What each API group is for. This is the one thing a definition does not carry
+ * — a group has no description of its own — so it is authored, and a group that
+ * appears upstream without an entry fails the build rather than rendering a
+ * heading with nothing under it.
+ */
+const GROUP_NOTES: Record<string, string> = {
+  "platform.nanohype.dev":
+    "Tenancy. Who owns what, and the boundary the rest of the platform reconciles inside.",
+  "agents.nanohype.dev":
+    "Runtime. How model access is exposed, and the shapes agent work actually runs in.",
+  "governance.nanohype.dev":
+    "Control loops. Spend, service level, and evaluation — each one a policy that acts, not a dashboard that reports.",
+  "fleet.nanohype.dev":
+    "Clusters. The order a team places to have one vended, and what the vend reports back.",
+};
+
+const missing = groups.map((group) => group.group).filter((group) => !(group in GROUP_NOTES));
+if (missing.length > 0) {
+  throw new Error(
+    [
+      `The API group ${missing.join(", ")} is shipped by the operator but has no note on this page.`,
+      "Add it to GROUP_NOTES in src/pages/platform/resources/index.astro — a group",
+      "heading with no description publishes a section that says nothing.",
+    ].join("\n"),
+  );
+}
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Resource reference",
+    description:
+      "Every custom resource the eks-agent-platform operator ships — group, scope, and the full spec schema, generated from the installed CRDs.",
+  }}
+>
+  <p>
+    {total} custom resources across {groups.length} API groups, reconciled by {repos.length} control
+    planes — {repos.map((repo, index) => (
+      <>
+        {index > 0 ? <span> and </span> : null}
+        <a href={`/repos/${repo}/`}>
+          <code>{repo}</code>
+        </a>
+      </>
+    ))}.
+  </p>
+
+  <p>
+    Everything below is generated from the definitions those repos ship — the same files a cluster
+    installs. A field on this page is a field the API server will accept, and a field the API server
+    accepts is on this page.
+  </p>
+
+  {
+    groups.map((group) => (
+      <>
+        <h2 id={group.group}>
+          <code>{group.group}</code>
+        </h2>
+        <p>{GROUP_NOTES[group.group]}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Kind</th>
+              <th>Scope</th>
+              <th>What it is</th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.resources.map((resource) => (
+              <tr>
+                <td>
+                  <a href={`/platform/resources/${resourceSlug(resource)}/`}>
+                    <code>{resource.kind}</code>
+                  </a>
+                </td>
+                <td>{resource.scope}</td>
+                <td>{resource.summary}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    ))
+  }
+
+  <h2 id="reading-them">Reading them from a cluster</h2>
+  <p>
+    The CRDs are the contract, and a live cluster is the other copy of it. Both answer the same
+    question, which is the point:
+  </p>
+  <pre><code>{`kubectl api-resources --api-group=agents.nanohype.dev
+kubectl explain agentfleet.spec.agents
+kubectl get platforms -A`}</code></pre>
+</StarlightPage>
+
+<style>
+  table {
+    display: table;
+    width: 100%;
+  }
+  td:first-child,
+  td:nth-child(2) {
+    white-space: nowrap;
+  }
+</style>
