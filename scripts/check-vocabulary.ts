@@ -75,12 +75,31 @@ async function labelNamespaces(): Promise<Set<string>> {
  * from adjacent blocks cannot run together into a token that was never written.
  */
 const INLINE = /<\/?(?:span|a|code|em|strong|b|i|mark|sup|sub)\b[^>]*>/gi;
+const TAG = /<[^>]+>/g;
+
+/**
+ * Applies a pattern until the string stops changing.
+ *
+ * One pass is not enough: removing a match can splice its neighbours into a new
+ * match that the same pass already stepped over. `<<span>span>` reduces to
+ * `<span>` and would survive, taking whatever it wrapped out of the scan with
+ * it. Repeating to a fixed point is what makes "the tags are gone" true rather
+ * than usually true, and every pattern here only ever shortens the string, so
+ * it terminates.
+ */
+function stripToFixedPoint(input: string, pattern: RegExp, replacement: string): string {
+  let current = input;
+  for (;;) {
+    const next = current.replace(pattern, replacement);
+    if (next === current) return current;
+    current = next;
+  }
+}
 
 function textOf(html: string): string {
-  return html
-    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "\n")
-    .replace(INLINE, "")
-    .replace(/<[^>]+>/g, "\n")
+  const withoutScripts = stripToFixedPoint(html, /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "\n");
+  const withoutInline = stripToFixedPoint(withoutScripts, INLINE, "");
+  return stripToFixedPoint(withoutInline, TAG, "\n")
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)))
     .replace(/&lt;/g, "<")

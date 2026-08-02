@@ -64,8 +64,9 @@ export interface ResourceGroup {
 /** One repo's published API definitions. */
 interface DefinitionSource {
   repo: string;
-  /** Path within the repo, and the env var CI uses to relocate it. */
-  path: string;
+  /** Where the definitions sit inside that repo. */
+  repoPath: string;
+  /** The variable CI uses to point at a checkout that is not a sibling. */
   env: string;
 }
 
@@ -73,15 +74,15 @@ interface DefinitionSource {
  * The control planes whose resources this site documents.
  *
  * Both repos are sibling checkouts like every other org repo, so the defaults
- * point into them; CI overrides each with its own variable.
+ * are derived from the repo name; CI overrides each with its own variable.
  */
 const SOURCES: DefinitionSource[] = [
   {
     repo: "eks-agent-platform",
-    path: "../eks-agent-platform/charts/operator/crds",
+    repoPath: "charts/operator/crds",
     env: "NANOHYPE_CRDS_DIR",
   },
-  { repo: "eks-fleet", path: "../eks-fleet/apis", env: "NANOHYPE_XRDS_DIR" },
+  { repo: "eks-fleet", repoPath: "apis", env: "NANOHYPE_XRDS_DIR" },
 ];
 
 /**
@@ -91,7 +92,7 @@ const SOURCES: DefinitionSource[] = [
 function resolveDir(source: DefinitionSource): string {
   const override = process.env[source.env];
   if (override) return override;
-  return resolve(process.cwd(), source.path);
+  return resolve(process.cwd(), "..", source.repo, source.repoPath);
 }
 
 function fail(source: DefinitionSource, dir: string, detail: string): never {
@@ -101,8 +102,8 @@ function fail(source: DefinitionSource, dir: string, detail: string): never {
       detail,
       "",
       "The pages under /platform/resources/ are generated from the API definitions",
-      `${source.repo} ships in ${source.path.replace("../", "")}. Check that repo out`,
-      `as a sibling of this one, or point ${source.env} at its definitions.`,
+      `${source.repo} ships in ${source.repoPath}. Check that repo out as a sibling`,
+      `of this one, or point ${source.env} at its definitions.`,
     ].join("\n"),
   );
 }
