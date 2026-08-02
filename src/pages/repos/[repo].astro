@@ -1,0 +1,55 @@
+---
+import { getCollection, render } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+export async function getStaticPaths() {
+  const contracts = await getCollection("contracts");
+  return contracts.map((entry) => ({ params: { repo: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const repoUrl = `https://github.com/nanohype/${entry.data.repo}`;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: entry.data.repo,
+    description: `${entry.data.role} — ${entry.data.owns}`,
+    tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+  }}
+>
+  <p class="role">{entry.data.role}</p>
+  <p>{entry.data.owns}</p>
+
+  <p class="meta">
+    <a href={repoUrl}>github.com/nanohype/{entry.data.repo}</a> ·
+    <a href={`${repoUrl}/blob/main/AGENTS.md`}>AGENTS.md</a>
+  </p>
+
+  <hr />
+
+  <p class="preamble">
+    What follows is that repo's <code>AGENTS.md</code> — the entry point an agent reads before
+    working on it. It is rendered from the repo itself at build time rather than copied, so it
+    says what the repo says today. Links in it point back at the repo they were written for.
+  </p>
+
+  <Content />
+</StarlightPage>
+
+<style>
+  .role {
+    font-size: var(--sl-text-lg);
+    color: var(--sl-color-white);
+    margin-block-end: 0.35rem;
+  }
+  .meta,
+  .preamble {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+  hr {
+    margin-block: 1.75rem;
+  }
+</style>
