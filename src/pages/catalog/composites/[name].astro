@@ -1,0 +1,150 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadCatalogData } from "../../../lib/catalog.ts";
+
+export async function getStaticPaths() {
+  const { composites, templates } = await loadCatalogData();
+  const known = new Set(templates.map((template) => template.entry.name));
+  return composites.map((composite) => ({
+    params: { name: composite.entry.name },
+    props: { composite, known },
+  }));
+}
+
+const { composite, known } = Astro.props;
+const { entry, manifest } = composite;
+const required = manifest.variables.filter((variable) => variable.required);
+const optional = manifest.variables.filter((variable) => !variable.required);
+const repoUrl = `https://github.com/nanohype/nanohype/tree/main/${entry.path}`;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: entry.displayName,
+    description: entry.description.split(". ")[0],
+    tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 2 },
+  }}
+>
+  <p>{entry.description}</p>
+
+  <table>
+    <tbody>
+      <tr><td>Name</td><td><code>{entry.name}</code></td></tr>
+      <tr><td>Version</td><td><code>{entry.version}</code></td></tr>
+      <tr><td>Tags</td><td>{(entry.tags ?? []).join(", ")}</td></tr>
+      <tr><td>Source</td><td><a href={repoUrl}><code>{entry.path}</code></a></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="render-it">Render it</h2>
+  <pre><code>{`# CLI
+npx @nanohype/sdk render-composite ${entry.name} --out ./my-app
+
+# SDK
+import { LocalSource, renderComposite } from "@nanohype/sdk";
+const result = await renderComposite(source, "${entry.name}", variables);
+
+# MCP — from an agent
+get_composite({ name: "${entry.name}" })`}</code></pre>
+
+  <h2 id="templates">What it draws together</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Template</th>
+        <th>Rendered at</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        manifest.templates.map((member) => (
+          <tr>
+            <td>
+              {known.has(member.template) ? (
+                <a href={`/catalog/templates/${member.template}/`}>
+                  <code>{member.template}</code>
+                </a>
+              ) : (
+                <code>{member.template}</code>
+              )}
+            </td>
+            <td>{member.path ? <code>{member.path}</code> : <em>root</em>}</td>
+            <td>
+              {member.root ? "the root project" : ""}
+              {member.condition ? (
+                <>
+                  only when <code>{member.condition}</code>
+                </>
+              ) : (
+                ""
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <h2 id="variables">Variables</h2>
+  {
+    manifest.variables.length === 0 ? (
+      <p>This composite takes no variables of its own.</p>
+    ) : (
+      <>
+        {required.length > 0 && (
+          <>
+            <h3>Required</h3>
+            <dl>
+              {required.map((variable) => (
+                <>
+                  <dt>
+                    <code>{variable.name}</code> <em>{variable.type}</em>
+                  </dt>
+                  <dd>
+                    {variable.description}
+                    {variable.validation?.message ? <> {variable.validation.message}.</> : null}
+                  </dd>
+                </>
+              ))}
+            </dl>
+          </>
+        )}
+        {optional.length > 0 && (
+          <>
+            <h3>Optional</h3>
+            <dl>
+              {optional.map((variable) => (
+                <>
+                  <dt>
+                    <code>{variable.name}</code> <em>{variable.type}</em>
+                    {variable.default !== undefined ? (
+                      <> — defaults to <code>{String(variable.default)}</code></>
+                    ) : null}
+                  </dt>
+                  <dd>{variable.description}</dd>
+                </>
+              ))}
+            </dl>
+          </>
+        )}
+      </>
+    )
+  }
+</StarlightPage>
+
+<style>
+  dt {
+    margin-top: 0.85rem;
+  }
+  dt em {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+  dd {
+    margin-inline-start: 1rem;
+  }
+  td:first-child {
+    white-space: nowrap;
+  }
+</style>

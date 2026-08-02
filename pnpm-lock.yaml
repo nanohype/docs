@@ -15,6 +15,9 @@ importers:
       '@astrojs/starlight':
         specifier: ^0.41.3
         version: 0.41.3(@astrojs/markdown-remark@7.2.1)(astro@7.1.4(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.3)(yaml@2.9.0))(typescript@6.0.3)
+      '@nanohype/sdk':
+        specifier: ^0.2.1
+        version: 0.2.1
       '@shuttering/starlight':
         specifier: ^0.2.1
         version: 0.2.1(@astrojs/starlight@0.41.3(@astrojs/markdown-remark@7.2.1)(astro@7.1.4(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.3)(yaml@2.9.0))(typescript@6.0.3))(astro@7.1.4(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@24.13.3)(yaml@2.9.0))
@@ -688,6 +691,11 @@ packages:
     peerDependenciesMeta:
       vitest:
         optional: true
+
+  '@nanohype/sdk@0.2.1':
+    resolution: {integrity: sha512-uSRx1nVaMYeMtfn6PKlnegRCafMb4JOUlFtpTbnGnjP3NihbI1rLtdO3QotwxtS/D30+9/t3MUTONejoxfJrkw==}
+    engines: {node: '>=24'}
+    hasBin: true
 
   '@nanohype/tokens@0.2.0':
     resolution: {integrity: sha512-1PNZW0aiaarCVaUHsa54ot8e3ckoGGxCqetX8lL1wrc/Kietvhg0gfcqt1RHDkaJBQH3ofufONyXBVDXHQrcJQ==}
@@ -1486,6 +1494,10 @@ packages:
 
   js-yaml@4.3.0:
     resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+    hasBin: true
+
+  js-yaml@5.2.3:
+    resolution: {integrity: sha512-n+mUVyUX5bVv7G/G2zyIHOhdxfuU1dY2NOFzTQUWiMUbFss8b57NFlgCCaggU78wSw5KVS9cllzeLyzyR+n5nw==}
     hasBin: true
 
   json-schema-traverse@1.0.0:
@@ -3128,6 +3140,10 @@ snapshots:
     optionalDependencies:
       vitest: 4.1.10(@types/node@24.13.3)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(yaml@2.9.0))
 
+  '@nanohype/sdk@0.2.1':
+    dependencies:
+      js-yaml: 5.2.3
+
   '@nanohype/tokens@0.2.0': {}
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
@@ -4105,6 +4121,10 @@ snapshots:
   is-plain-obj@4.1.0: {}
 
   js-yaml@4.3.0:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@5.2.3:
     dependencies:
       argparse: 2.0.1
 

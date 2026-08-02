@@ -1,0 +1,205 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { compositesUsing, fileTree, loadCatalogData } from "../../../lib/catalog.ts";
+
+export async function getStaticPaths() {
+  const { templates, composites } = await loadCatalogData();
+  return templates.map((template) => ({
+    params: { name: template.entry.name },
+    props: { template, composites },
+  }));
+}
+
+const { template, composites } = Astro.props;
+const { entry, manifest, files } = template;
+const usedBy = compositesUsing(entry.name, composites);
+const tree = fileTree(files);
+const required = manifest.variables.filter((variable) => variable.required);
+const optional = manifest.variables.filter((variable) => !variable.required);
+const repoUrl = `https://github.com/nanohype/nanohype/tree/main/${entry.path}`;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: entry.displayName,
+    description: entry.description.split(". ")[0],
+    tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 2 },
+  }}
+>
+  <p>{entry.description}</p>
+
+  <table>
+    <tbody>
+      <tr><td>Name</td><td><code>{entry.name}</code></td></tr>
+      <tr><td>Version</td><td><code>{entry.version}</code></td></tr>
+      <tr><td>Category</td><td>{entry.category}</td></tr>
+      {manifest.license && <tr><td>License</td><td>{manifest.license}</td></tr>}
+      {entry.persona?.length && <tr><td>Persona</td><td>{entry.persona.join(", ")}</td></tr>}
+      <tr><td>Tags</td><td>{(entry.tags ?? []).join(", ")}</td></tr>
+      <tr><td>Source</td><td><a href={repoUrl}><code>{entry.path}</code></a></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="render-it">Render it</h2>
+  <p>Three front doors, one catalog. Pick whichever suits the caller.</p>
+
+  <pre><code>{`# CLI
+npx @nanohype/sdk render ${entry.name} --out ./my-app
+
+# SDK
+import { LocalSource, renderTemplate } from "@nanohype/sdk";
+const result = await renderTemplate(source, "${entry.name}", variables);
+
+# MCP — from an agent
+get_template({ name: "${entry.name}" })`}</code></pre>
+
+  {
+    manifest.prerequisites?.length ? (
+      <>
+        <h2 id="prerequisites">Prerequisites</h2>
+        <table>
+          <thead>
+            <tr><th>Tool</th><th>Version</th><th>Why</th></tr>
+          </thead>
+          <tbody>
+            {manifest.prerequisites.map((prerequisite) => (
+              <tr>
+                <td>
+                  <code>{prerequisite.name}</code>
+                  {prerequisite.optional ? " (optional)" : ""}
+                </td>
+                <td>{prerequisite.version ? <code>{prerequisite.version}</code> : "—"}</td>
+                <td>{prerequisite.purpose}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    ) : null
+  }
+
+  <h2 id="variables">Variables</h2>
+  {
+    manifest.variables.length === 0 ? (
+      <p>This template takes no variables — it renders the same output every time.</p>
+    ) : (
+      <>
+        {required.length > 0 && (
+          <>
+            <h3>Required</h3>
+            <dl>
+              {required.map((variable) => (
+                <>
+                  <dt>
+                    <code>{variable.name}</code> <em>{variable.type}</em>
+                  </dt>
+                  <dd>
+                    {variable.description}
+                    {variable.options?.length ? (
+                      <> One of: {variable.options.map((option) => <code>{option}</code>)}.</>
+                    ) : null}
+                    {variable.validation?.message ? <> {variable.validation.message}.</> : null}
+                  </dd>
+                </>
+              ))}
+            </dl>
+          </>
+        )}
+        {optional.length > 0 && (
+          <>
+            <h3>Optional</h3>
+            <dl>
+              {optional.map((variable) => (
+                <>
+                  <dt>
+                    <code>{variable.name}</code> <em>{variable.type}</em>
+                    {variable.default !== undefined ? (
+                      <> — defaults to <code>{String(variable.default)}</code></>
+                    ) : null}
+                  </dt>
+                  <dd>
+                    {variable.description}
+                    {variable.options?.length ? (
+                      <> One of: {variable.options.map((option) => <code>{option}</code>)}.</>
+                    ) : null}
+                  </dd>
+                </>
+              ))}
+            </dl>
+          </>
+        )}
+      </>
+    )
+  }
+
+  <h2 id="output">What it produces</h2>
+  {
+    tree.length === 0 ? (
+      <p>
+        This entry ships no skeleton — it is a brief, rendered as guidance rather than as files.
+      </p>
+    ) : (
+      <>
+        <p>
+          {tree.length} files. Placeholder names such as <code>__APP_NAME__</code> are what the
+          renderer substitutes into.
+        </p>
+        <pre><code>{tree.join("\n")}</code></pre>
+      </>
+    )
+  }
+
+  {
+    manifest.composition?.pairsWith?.length || manifest.composition?.nestsInside?.length ? (
+      <>
+        <h2 id="composition">Composes with</h2>
+        <ul>
+          {manifest.composition.pairsWith?.map((other) => (
+            <li>
+              Pairs with <a href={`/catalog/templates/${other}/`}><code>{other}</code></a>
+            </li>
+          ))}
+          {manifest.composition.nestsInside?.map((other) => (
+            <li>
+              Nests inside <a href={`/catalog/templates/${other}/`}><code>{other}</code></a>
+            </li>
+          ))}
+        </ul>
+      </>
+    ) : null
+  }
+
+  {
+    usedBy.length > 0 ? (
+      <>
+        <h2 id="used-by">Composites that use it</h2>
+        <ul>
+          {usedBy.map((composite) => (
+            <li>
+              <a href={`/catalog/composites/${composite.entry.name}/`}>
+                {composite.entry.displayName}
+              </a>{" "}
+              — {composite.entry.description.split(". ")[0]}.
+            </li>
+          ))}
+        </ul>
+      </>
+    ) : null
+  }
+</StarlightPage>
+
+<style>
+  dt {
+    margin-top: 0.85rem;
+  }
+  dt em {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+  dd {
+    margin-inline-start: 1rem;
+  }
+  td:first-child {
+    white-space: nowrap;
+  }
+</style>

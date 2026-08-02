@@ -3,6 +3,10 @@ dist
 .astro
 .DS_Store
 
+# Where CI checks the catalog out so the /catalog/ reference can be generated.
+# Locally the build reads the sibling checkout instead and never creates this.
+.catalog/
+
 # OpenTofu / Terragrunt
 .terragrunt-cache
 .terraform

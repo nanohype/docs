@@ -1,0 +1,109 @@
+---
+/**
+ * Renders one node of a standard's `content` tree.
+ *
+ * The eleven standards share an envelope (title, summary, version, content) but
+ * their `content` shapes are deliberately unlike each other — a naming grammar
+ * and an LLM policy have nothing structural in common. Rather than special-case
+ * eleven renderers that drift the moment a standard gains a field, this walks
+ * whatever it is given.
+ *
+ * Keys stay verbatim rather than being prettified: these are the contract keys
+ * an agent reads out of the JSON, and a reader comparing page to payload should
+ * see the same strings in both.
+ */
+import Self from "./StandardValue.astro";
+
+interface Props {
+  value: unknown;
+  depth?: number;
+}
+
+const { value, depth = 0 } = Astro.props;
+
+const isRecord = (input: unknown): input is Record<string, unknown> =>
+  typeof input === "object" && input !== null && !Array.isArray(input);
+
+const isScalar = (input: unknown): input is string | number | boolean =>
+  typeof input === "string" || typeof input === "number" || typeof input === "boolean";
+
+// Long strings read as prose; short ones are values and read better inline.
+const PROSE = 90;
+---
+
+{value === null || value === undefined ? <span>—</span> : null}
+
+{
+  typeof value === "string" ? (
+    value.length > PROSE ? (
+      <p>{value}</p>
+    ) : (
+      <span>{value}</span>
+    )
+  ) : null
+}
+
+{typeof value === "number" || typeof value === "boolean" ? <code>{String(value)}</code> : null}
+
+{
+  Array.isArray(value) ? (
+    value.length === 0 ? (
+      <span>—</span>
+    ) : value.every(isScalar) ? (
+      <ul>
+        {value.map((item) => (
+          <li>{typeof item === "string" && item.length > PROSE ? item : <code>{String(item)}</code>}</li>
+        ))}
+      </ul>
+    ) : (
+      <ul>
+        {value.map((item) => (
+          <li>
+            <Self value={item} depth={depth + 1} />
+          </li>
+        ))}
+      </ul>
+    )
+  ) : null
+}
+
+{
+  isRecord(value) ? (
+    <dl class:list={["standard-node", depth > 0 && "nested"]}>
+      {Object.entries(value).map(([key, child]) => (
+        <>
+          <dt>
+            <code>{key}</code>
+          </dt>
+          <dd>
+            <Self value={child} depth={depth + 1} />
+          </dd>
+        </>
+      ))}
+    </dl>
+  ) : null
+}
+
+<style>
+  .standard-node {
+    margin: 0;
+  }
+  .standard-node.nested {
+    border-inline-start: 1px solid var(--sl-color-gray-5);
+    padding-inline-start: 0.85rem;
+    margin-block-start: 0.35rem;
+  }
+  dt {
+    margin-block-start: 0.5rem;
+    font-weight: 600;
+  }
+  dd {
+    margin-inline-start: 0;
+  }
+  dd > p {
+    margin-block: 0.2rem;
+  }
+  ul {
+    margin-block: 0.2rem;
+  }
+</style>

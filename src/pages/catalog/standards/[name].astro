@@ -1,0 +1,50 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import StandardValue from "../../../components/StandardValue.astro";
+import { loadCatalogData } from "../../../lib/catalog.ts";
+
+export async function getStaticPaths() {
+  const { standards } = await loadCatalogData();
+  return Object.entries(standards).map(([name, standard]) => ({
+    params: { name },
+    props: { name, standard },
+  }));
+}
+
+const { name, standard } = Astro.props;
+const repoUrl = `https://github.com/nanohype/nanohype/blob/main/standards/${name}.json`;
+const record = standard as unknown as Record<string, unknown>;
+const content = record.content;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: String(record.title ?? name),
+    description: String(record.summary ?? `The ${name} standard.`),
+  }}
+>
+  <p>{String(record.summary ?? "")}</p>
+
+  <table>
+    <tbody>
+      <tr><td>Name</td><td><code>{name}</code></td></tr>
+      <tr><td>Version</td><td><code>{String(record.version ?? "—")}</code></td></tr>
+      <tr><td>Source</td><td><a href={repoUrl}><code>standards/{name}.json</code></a></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="the-standard">The standard</h2>
+  {
+    content === undefined ? (
+      <p>This standard carries no content block.</p>
+    ) : (
+      <StandardValue value={content} />
+    )
+  }
+</StarlightPage>
+
+<style>
+  td:first-child {
+    white-space: nowrap;
+  }
+</style>
