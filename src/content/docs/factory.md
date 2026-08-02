@@ -9,7 +9,7 @@ software.
 
 ## The pipeline
 
-Work moves through phase-scoped sessions, each with its own slice of an ~80-role
+Work moves through phase-scoped sessions, each with its own slice of a 78-role
 roster (curator/engineer naming; flat, no coordinator). The phases run from intake
 and design through implementation, and every change meets an **evidence-bound merge
 gate** before it lands.
