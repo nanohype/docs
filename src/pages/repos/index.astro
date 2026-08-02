@@ -1,0 +1,119 @@
+---
+import { getCollection } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+const contracts = await getCollection("contracts");
+const order = [
+  "nanohype",
+  "fab",
+  "landing-zone",
+  "eks-gitops",
+  "eks-agent-platform",
+  "eks-fleet",
+  "kx",
+  "portal",
+  "cloudgov",
+];
+const sorted = [...contracts].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
+// Factory output. These ship as an application rather than as a layer of the
+// platform, so they carry no agent contract and get no page here.
+const tenants = [
+  { name: "competitive-intelligence", what: "competitor-change radar" },
+  { name: "incident-response", what: "incident commander" },
+  { name: "digest-pipeline", what: "weekly newsletter" },
+  { name: "slack-knowledge-bot", what: "ACL-filtered retrieval" },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Repos",
+    description:
+      "The canonical nanohype repos, the role each plays, and the agent contract each one ships.",
+  }}
+>
+  <p>
+    Every repo in the org is one of three things: <strong>factory context</strong>,
+    <strong>factory output</strong>, or the <strong>factory itself</strong>. The public ones are
+    below; the GitOps state repos the portal drives are private.
+  </p>
+
+  <p>
+    Each repo below ships an <code>AGENTS.md</code> — the entry point an agent reads before
+    working on it. Those are rendered here from the repos themselves, so what you read is what
+    an agent reads.
+  </p>
+
+  <div class="grid">
+    {
+      sorted.map((entry) => (
+        <a class="card" href={`/repos/${entry.id}/`}>
+          <span class="card-title">
+            <code>{entry.id}</code>
+          </span>
+          <span class="card-role">{entry.data.role}</span>
+          <span class="card-owns">{entry.data.owns}</span>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 id="factory-output">Factory output</h2>
+  <p>
+    Standalone Platform tenants, each a Helm chart plus a <code>Platform</code> CR. They are what
+    the factory produces rather than part of what produces it, so they ship an application and
+    not an agent contract.
+  </p>
+  <ul>
+    {
+      tenants.map((tenant) => (
+        <li>
+          <a href={`https://github.com/nanohype/${tenant.name}`}>
+            <code>{tenant.name}</code>
+          </a>{" "}
+          — {tenant.what}
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2 id="design-principle">Design principle</h2>
+  <p>
+    This is a greenfield system: every repo presents as a single-generation design, architected
+    in its current shape rather than evolved into it. Shared primitives and tooling presets live
+    in consumed packages, not in per-repo copies that drift.
+  </p>
+</StarlightPage>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .card:hover {
+    border-color: var(--sl-color-accent);
+  }
+  .card-role {
+    font-weight: 600;
+    color: var(--sl-color-white);
+  }
+  .card-owns {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+    line-height: 1.5;
+  }
+</style>

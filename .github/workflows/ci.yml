@@ -35,7 +35,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nanohype/nanohype
-          path: .catalog
+          path: .org/nanohype
+      # The /repos/ pages render each repo's AGENTS.md. The SDK resolves those
+      # from checkouts beside the catalog, mirroring the org layout, so `.org/`
+      # reproduces that layout — only the one file each, since nothing else is
+      # read. `curl -f` exits non-zero on a 404, so a renamed or deleted
+      # contract fails here rather than vanishing from the published list.
+      - name: fetch the agent contracts
+        run: |
+          for r in landing-zone eks-gitops eks-agent-platform kx cloudgov fab portal eks-fleet; do
+            mkdir -p ".org/$r"
+            curl -fsSL -o ".org/$r/AGENTS.md" \
+              "https://raw.githubusercontent.com/nanohype/$r/main/AGENTS.md"
+          done
       # The /atlas/ pages render the diagrams that repo emits, and caption them
       # from the manifest emitted beside them. Not committed here: the pages
       # show what the atlas last emitted rather than a copy someone has to
@@ -47,7 +59,7 @@ jobs:
           path: .atlas
       - run: pnpm build
         env:
-          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
+          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
       # Lint / format gate. Biome, pinned via npx, checks and formats the source
       # in one pass, exiting

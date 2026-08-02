@@ -6,7 +6,7 @@ dist
 # Where CI checks the catalog and the atlas out so the generated reference and
 # the /atlas/ pages can be built. Locally the build reads the sibling checkouts
 # instead and never creates these.
-.catalog/
+.org/
 .atlas/
 
 # OpenTofu / Terragrunt

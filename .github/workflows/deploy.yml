@@ -59,7 +59,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nanohype/nanohype
-          path: .catalog
+          path: .org/nanohype
+
+      # The /repos/ pages render each repo's AGENTS.md, which the SDK resolves
+      # from checkouts beside the catalog. `.org/` reproduces that layout with
+      # only the one file each; `curl -f` fails the deploy on a missing one.
+      - name: Fetch the agent contracts
+        run: |
+          for r in landing-zone eks-gitops eks-agent-platform kx cloudgov fab portal eks-fleet; do
+            mkdir -p ".org/$r"
+            curl -fsSL -o ".org/$r/AGENTS.md" \
+              "https://raw.githubusercontent.com/nanohype/$r/main/AGENTS.md"
+          done
 
       - name: Checkout the atlas
         uses: actions/checkout@v4
@@ -70,7 +81,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
+          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
 
       - uses: aws-actions/configure-aws-credentials@v4
