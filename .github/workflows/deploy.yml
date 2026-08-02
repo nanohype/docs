@@ -78,9 +78,10 @@ jobs:
           repository: nanohype/.github
           path: .atlas
 
-      # The /platform/resources/ reference is generated from the shipped CRDs,
-      # and postbuild checks every apiVersion and kind on the site against them.
-      # Sparse: the chart's crds/ directory is the entire input.
+      # The /platform/resources/ reference is generated from the API definitions
+      # the org's two control planes ship, and postbuild checks every apiVersion
+      # and kind on the site against them. Sparse: the definitions are the whole
+      # input.
       - name: Checkout the platform CRDs
         uses: actions/checkout@v4
         with:
@@ -89,12 +90,21 @@ jobs:
           sparse-checkout: charts/operator/crds
           sparse-checkout-cone-mode: false
 
+      - name: Checkout the fleet API
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/eks-fleet
+          path: .fleet
+          sparse-checkout: apis
+          sparse-checkout-cone-mode: false
+
       - name: Build
         run: pnpm build
         env:
           NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
           NANOHYPE_CRDS_DIR: ${{ github.workspace }}/.platform/charts/operator/crds
+          NANOHYPE_XRDS_DIR: ${{ github.workspace }}/.fleet/apis
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
