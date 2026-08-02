@@ -3,9 +3,11 @@ dist
 .astro
 .DS_Store
 
-# Where CI checks the catalog out so the /catalog/ reference can be generated.
-# Locally the build reads the sibling checkout instead and never creates this.
+# Where CI checks the catalog and the atlas out so the generated reference and
+# the /atlas/ pages can be built. Locally the build reads the sibling checkouts
+# instead and never creates these.
 .catalog/
+.atlas/
 
 # OpenTofu / Terragrunt
 .terragrunt-cache
@@ -17,3 +19,6 @@ dist
 # out of the repo — a published record of what a repo scored and how it got
 # fixed is the accretion evidence the greenfield doctrine exists to prevent.
 .plans/
+
+# Diagrams copied in from the atlas emit during prebuild — see scripts/sync-atlas.ts.
+public/atlas/

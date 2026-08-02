@@ -61,10 +61,17 @@ jobs:
           repository: nanohype/nanohype
           path: .catalog
 
+      - name: Checkout the atlas
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/.github
+          path: .atlas
+
       - name: Build
         run: pnpm build
         env:
           NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
+          NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

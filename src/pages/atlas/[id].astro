@@ -1,0 +1,119 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadAtlas } from "../../lib/atlas.ts";
+
+export async function getStaticPaths() {
+  const perspectives = await loadAtlas();
+  return perspectives.map((perspective, index) => ({
+    params: { id: perspective.id },
+    props: {
+      perspective,
+      previous: perspectives[index - 1],
+      next: perspectives[index + 1],
+    },
+  }));
+}
+
+const { perspective, previous, next } = Astro.props;
+const sourceUrl =
+  "https://github.com/nanohype/.github/blob/main/atlas/src/perspectives/" +
+  `${String(perspective.index).padStart(2, "0")}-${perspective.id}.ts`;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: perspective.name,
+    description: perspective.blurb,
+    tableOfContents: false,
+  }}
+>
+  <p class="blurb">{perspective.blurb}</p>
+
+  <figure>
+    <img src={`/atlas/${perspective.svg}`} alt={`${perspective.name} — ${perspective.blurb}`} />
+  </figure>
+
+  {perspective.notes.map((note) => <p>{note}</p>)}
+
+  <nav class="pager">
+    {
+      previous ? (
+        <a class="pager-link" href={`/atlas/${previous.id}/`}>
+          <span class="pager-label">Previous</span>
+          <span>{previous.name}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next ? (
+        <a class="pager-link next" href={`/atlas/${next.id}/`}>
+          <span class="pager-label">Next</span>
+          <span>{next.name}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+  </nav>
+
+  <p class="source">
+    Drawn from <a href={sourceUrl}>its model</a>, and rendered by the atlas project in
+    <code>nanohype/.github</code>.
+  </p>
+</StarlightPage>
+
+<style>
+  .blurb {
+    font-size: var(--sl-text-lg);
+    color: var(--sl-color-gray-2);
+  }
+  /* The diagrams are authored on a light ground and carry their own white
+     background, so they sit on a plate of their own rather than inheriting the
+     page theme — which is also how they read on GitHub. */
+  figure {
+    margin: 1.5rem 0;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #ffffff;
+    line-height: 0;
+  }
+  figure img {
+    width: 100%;
+    height: auto;
+  }
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: 2.5rem;
+  }
+  .pager-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .pager-link:hover {
+    border-color: var(--sl-color-accent);
+  }
+  .pager-link.next {
+    text-align: end;
+  }
+  .pager-label {
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+  }
+  .source {
+    margin-block-start: 2rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+</style>

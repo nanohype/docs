@@ -1,0 +1,78 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadAtlas } from "../../lib/atlas.ts";
+
+const perspectives = await loadAtlas();
+const [legend, ...views] = perspectives;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "The atlas",
+    description:
+      "Ten views of the nanohype stack — the factory, the substrate, the control plane, the request path, and the loops that govern them.",
+  }}
+>
+  <p>
+    One system, drawn ten ways. Each view answers a different question, and none of them tries
+    to answer all of them — a single diagram of this stack would be a wiring photograph rather
+    than an explanation.
+  </p>
+
+  <p>
+    Colour means the same thing on every page, position means ownership, and an arrow is spent
+    only where position cannot say the thing. <a href={`/atlas/${legend.id}/`}>{legend.name}</a>
+    is the key, and it is the one to read first.
+  </p>
+
+  <div class="grid">
+    {
+      views.map((view) => (
+        <a class="card" href={`/atlas/${view.id}/`}>
+          <span class="card-title">{view.name}</span>
+          <span class="card-blurb">{view.blurb}</span>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 id="where-they-come-from">Where they come from</h2>
+  <p>
+    The diagrams are generated from a model, not drawn. Each perspective is a declaration of
+    zones, nodes and edges; layout is deterministic, so the same model always produces the same
+    geometry, and a change to the model that is not re-emitted fails its own CI. The captions on
+    these pages come from that same model — a diagram and its description are one artifact.
+  </p>
+</StarlightPage>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .card:hover {
+    border-color: var(--sl-color-accent);
+  }
+  .card-title {
+    font-weight: 600;
+    color: var(--sl-color-white);
+  }
+  .card-blurb {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+    line-height: 1.5;
+  }
+</style>
