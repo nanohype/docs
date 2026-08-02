@@ -1,0 +1,94 @@
+---
+import { getCollection } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Building against it",
+    description:
+      "For anyone building on the nanohype stack — human or agent: the Platform Reference, the catalog reference, and how to author against them.",
+  }}
+>
+  <p>
+    Everything here is for building <em>with</em> the stack rather than evaluating it. If you
+    are still deciding what this is, <a href="/factory/">how the factory works</a> and
+    <a href="/atlas/">the atlas</a> are the shorter route.
+  </p>
+
+  <p>
+    <a href="/building/platform-reference/">The Platform Reference</a> is the front door for an
+    agent — a Claude Code session, a Bedrock agent, any client that produces software — and the
+    place to start if you are wiring one up. The rest go deeper on choosing, composing and
+    authoring.
+  </p>
+
+  <div class="grid">
+    {
+      guides.map((guide) => (
+        <a class="card" href={`/building/${guide.id}/`}>
+          <span class="card-title">{guide.data.title}</span>
+          <span class="card-desc">{guide.data.description}</span>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 id="machine-readable">The machine-readable surfaces</h2>
+  <p>
+    An agent should read the contracts rather than these pages. Each is a stable artifact the
+    factory maintains, and each has a rendered view here for humans:
+  </p>
+  <ul>
+    <li>
+      <code>catalog.json</code> — every template and composite, browsable at
+      <a href="/catalog/templates/">templates</a> and <a href="/catalog/composites/">composites</a>
+    </li>
+    <li>
+      <code>standards/*.json</code> — the production bar, browsable at
+      <a href="/catalog/standards/">standards</a>
+    </li>
+    <li>
+      <code>AGENTS.md</code> in each repo — the per-repo entry point, browsable at
+      <a href="/repos/">repos</a>
+    </li>
+    <li>
+      <code>@nanohype/sdk</code> to resolve and render them, and <code>@nanohype/mcp</code> to
+      expose the same surfaces as MCP tools
+    </li>
+  </ul>
+</StarlightPage>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .card:hover {
+    border-color: var(--sl-color-accent);
+  }
+  .card-title {
+    font-weight: 600;
+    color: var(--sl-color-white);
+  }
+  .card-desc {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+    line-height: 1.5;
+  }
+</style>
