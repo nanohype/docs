@@ -46,6 +46,17 @@ export default defineConfig({
           ],
         },
         {
+          // Generated from nanohype/nanohype at build time — see src/lib/catalog.ts.
+          // Index pages only: the ~130 detail pages hang off them and are reached by
+          // search and by link, not by a sidebar nobody could scan.
+          label: "Reference: the catalog",
+          items: [
+            { label: "Templates", link: "/catalog/templates/" },
+            { label: "Composites", link: "/catalog/composites/" },
+            { label: "Standards", link: "/catalog/standards/" },
+          ],
+        },
+        {
           label: "The platform",
           items: [
             { label: "Platform tenants", link: "/platform/" },

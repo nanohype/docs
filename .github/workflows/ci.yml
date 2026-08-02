@@ -25,7 +25,20 @@ jobs:
           scan-args: |-
             --recursive
             ./
+      # The /catalog/ reference is generated from the catalog at build time —
+      # every template, composite and standard page. Checked out after
+      # osv-scanner so the scan stays scoped to this repo's own lockfile, and
+      # unpinned so the published reference tracks the catalog rather than a
+      # snapshot of it. A catalog that will not load fails the build loudly
+      # rather than shipping an empty reference; see src/lib/catalog.ts.
+      - name: checkout the catalog
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/nanohype
+          path: .catalog
       - run: pnpm build
+        env:
+          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
       # Lint / format gate. Biome, pinned via npx, checks and formats the source
       # in one pass, exiting
       # non-zero on any lint violation or unformatted file.

@@ -1,0 +1,95 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { byCategory, loadCatalogData, tagCounts } from "../../../lib/catalog.ts";
+
+const { catalog, templates } = await loadCatalogData();
+const groups = byCategory(templates);
+const tags = tagCounts(templates).slice(0, 24);
+const generated = new Date(catalog.generated_at).toISOString().slice(0, 10);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Templates",
+    description:
+      "Every template in the nanohype catalog — the single building blocks the factory scaffolds from, grouped by category.",
+    tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 2 },
+  }}
+>
+  <p>
+    A template is one building block: a manifest declaring its variables, and a skeleton the
+    renderer fills in. Composites assemble several at once — start at
+    <a href="/catalog/composites/">composites</a> if you want a whole app rather than a piece
+    of one.
+  </p>
+
+  <p>
+    {templates.length} templates, {groups.size} categories. Generated from
+    <a href="https://github.com/nanohype/nanohype">the catalog</a> on {generated}.
+  </p>
+
+  <h2 id="by-tag">By tag</h2>
+  <p class="tag-row">
+    {
+      tags.map(([tag, count]) => (
+        <span class="tag">
+          {tag} <span class="tag-count">{count}</span>
+        </span>
+      ))
+    }
+  </p>
+
+  {
+    [...groups].map(([category, entries]) => (
+      <>
+        <h2 id={category}>{category}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>What it scaffolds</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(({ entry }) => (
+              <tr>
+                <td>
+                  <a href={`/catalog/templates/${entry.name}/`}>
+                    <code>{entry.name}</code>
+                  </a>
+                </td>
+                <td>{entry.description.split(". ")[0]}.</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    ))
+  }
+</StarlightPage>
+
+<style>
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .tag {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.45rem;
+    font-size: var(--sl-text-xs);
+    font-family: var(--sl-font-mono, monospace);
+    white-space: nowrap;
+  }
+  .tag-count {
+    color: var(--sl-color-gray-3);
+  }
+  table {
+    display: table;
+    width: 100%;
+  }
+  td:first-child {
+    white-space: nowrap;
+  }
+</style>

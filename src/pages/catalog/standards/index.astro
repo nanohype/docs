@@ -1,0 +1,70 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadCatalogData } from "../../../lib/catalog.ts";
+
+const { standards } = await loadCatalogData();
+const entries = Object.entries(standards).sort(([a], [b]) => a.localeCompare(b));
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Standards",
+    description:
+      "The production bar every build is graded against — the eleven machine-readable guardrails the merge gate reads.",
+  }}
+>
+  <p>
+    A standard is the bar, written down once and read by machines. The factory's merge gate
+    grades against these, the templates conform to them, and an agent can fetch any of them
+    directly rather than inferring the rules from examples.
+  </p>
+
+  <p>
+    Each page below renders the standard's own JSON. The document is the contract; the page is
+    a view of it, generated at build time, so the two cannot disagree.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Standard</th>
+        <th>Covers</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        entries.map(([name, standard]) => (
+          <tr>
+            <td>
+              <a href={`/catalog/standards/${name}/`}>
+                <code>{name}</code>
+              </a>
+            </td>
+            <td>{standard.summary}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <h2 id="reading-them">Reading them programmatically</h2>
+  <pre><code>{`import { LocalSource, loadStandard, loadStandards } from "@nanohype/sdk";
+
+const source = new LocalSource({ rootDir });
+const policy = await loadStandard(source, "llm-policy");
+const all = await loadStandards(source);
+
+// MCP — from an agent
+get_standard({ name: "llm-policy" })
+list_standards()`}</code></pre>
+</StarlightPage>
+
+<style>
+  table {
+    display: table;
+    width: 100%;
+  }
+  td:first-child {
+    white-space: nowrap;
+  }
+</style>

@@ -51,8 +51,20 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # The /catalog/ reference is generated from the catalog at build time, so
+      # the deploy needs it checked out too. Unpinned, like CI: what ships is
+      # the catalog as it stands, and a catalog that will not load fails the
+      # deploy rather than publishing an empty reference.
+      - name: Checkout the catalog
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/nanohype
+          path: .catalog
+
       - name: Build
         run: pnpm build
+        env:
+          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

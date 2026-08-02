@@ -1,0 +1,61 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { loadCatalogData } from "../../../lib/catalog.ts";
+
+const { composites } = await loadCatalogData();
+const sorted = [...composites].sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Composites",
+    description:
+      "Assemblies of templates that scaffold a whole app in one shot — what each one draws together, and what the combination is for.",
+  }}
+>
+  <p>
+    A composite is an opinion about which templates belong together. It scaffolds a whole
+    deliverable in one pass rather than leaving the assembly to the caller — which is what makes
+    it the right starting point for most work. Reach for an individual
+    <a href="/catalog/templates/">template</a> when you are adding a piece to something that
+    already exists.
+  </p>
+
+  <p>{sorted.length} composites.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Composite</th>
+        <th>Templates</th>
+        <th>What it builds</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        sorted.map(({ entry, manifest }) => (
+          <tr>
+            <td>
+              <a href={`/catalog/composites/${entry.name}/`}>
+                <code>{entry.name}</code>
+              </a>
+            </td>
+            <td>{manifest.templates.length}</td>
+            <td>{entry.description.split(". ")[0]}.</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</StarlightPage>
+
+<style>
+  table {
+    display: table;
+    width: 100%;
+  }
+  td:first-child,
+  td:nth-child(2) {
+    white-space: nowrap;
+  }
+</style>

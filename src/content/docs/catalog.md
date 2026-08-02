@@ -9,13 +9,18 @@ and the SDK + MCP server that render it all.
 
 ## Templates and composites
 
-- **Templates** (`templates/`) — single building blocks, each with declared
-  variables and a rendered output shape.
-- **Composites** (`composites/`) — assemblies of templates that scaffold a whole
-  app or module in one shot (e.g. `platform-tenant`, `rag-agent`). The
-  `platform-tenant` composite pulls in the `k8s-app-tenant` template, which is
-  where the chart and the `Platform` CR come from.
+- **[Templates](/catalog/templates/)** (`templates/`) — single building blocks,
+  each with declared variables and a rendered output shape.
+- **[Composites](/catalog/composites/)** (`composites/`) — assemblies of templates
+  that scaffold a whole app or module in one shot (e.g. `platform-tenant`,
+  `rag-agent`). The `platform-tenant` composite pulls in the `k8s-app-tenant`
+  template, which is where the chart and the `Platform` CR come from.
 - **`catalog.json`** — the index the SDK and MCP resolve against.
+
+Every entry has a page: what it scaffolds, the variables it takes, the files it
+produces, and what it composes with. Those pages are generated from the catalog
+at build time, so they describe what the catalog holds rather than what someone
+last wrote down about it.
 
 ## Rendering
 
@@ -35,7 +40,8 @@ instead. (This docs site is one such case.)
 ## Standards
 
 The guardrails live in `standards/*.json`. They're what the merge gate grades
-against:
+against, and each one has [its own page](/catalog/standards/) rendering the
+document itself:
 
 | Standard                    | Covers                                                            |
 | --------------------------- | ----------------------------------------------------------------- |
