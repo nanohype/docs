@@ -36,9 +36,19 @@ jobs:
         with:
           repository: nanohype/nanohype
           path: .catalog
+      # The /atlas/ pages render the diagrams that repo emits, and caption them
+      # from the manifest emitted beside them. Not committed here: the pages
+      # show what the atlas last emitted rather than a copy someone has to
+      # remember to refresh.
+      - name: checkout the atlas
+        uses: actions/checkout@v4
+        with:
+          repository: nanohype/.github
+          path: .atlas
       - run: pnpm build
         env:
           NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.catalog
+          NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
       # Lint / format gate. Biome, pinned via npx, checks and formats the source
       # in one pass, exiting
       # non-zero on any lint violation or unformatted file.

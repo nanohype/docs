@@ -61,6 +61,7 @@ export default defineConfig({
           items: [
             { label: "Platform tenants", link: "/platform/" },
             { label: "The substrate", link: "/substrate/" },
+            { label: "The atlas", link: "/atlas/" },
           ],
         },
         {
