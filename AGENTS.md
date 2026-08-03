@@ -22,7 +22,12 @@ pnpm dev
 ## Content rules
 
 - Describe the design state, never migration history (greenfield doctrine)
-- Identity model is **EKS Pod Identity**, not IRSA — no role-arn annotation claims
+- **Tenant** identity is EKS Pod Identity — a tenant ServiceAccount carries no
+  role-arn annotation, and no page should claim otherwise. Two control-plane
+  bootstrap identities are IRSA-trusted (the operator's own role, and the fleet
+  hub's provider) because each exists before the thing that would mint it;
+  `/decisions/identity-binding/` states that boundary and it is accurate. Do not
+  "correct" it to a blanket claim
 - `eks-fleet` vends via Crossplane + provider-opentofu, not CAPA
 - Standards: count `nanohype/standards/*.json` before claiming how many — never guess, and never list a subset as if it were all of them
 - Public repo table should name this repo and `homebrew-tap` when claiming coverage
