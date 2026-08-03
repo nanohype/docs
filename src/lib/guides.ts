@@ -122,6 +122,28 @@ function rootDir(): string {
 }
 
 /**
+ * Resolves a relative link against the directory of the document that wrote it,
+ * collapsing `.` and `..` the way a filesystem would.
+ *
+ * The guides do not all sit at the same depth — three of them live in
+ * `docs/spec/` — so the directory has to come from the document rather than be
+ * assumed. A `../..` written from `docs/spec/` reaches the repo root, and the
+ * same text written from `docs/` reaches above it, which is a link nobody can
+ * follow. Segments that would escape the repo are dropped rather than emitted,
+ * because a URL containing `..` resolves to a 404 on GitHub and reads as a real
+ * path in the markdown source.
+ */
+export function resolveRepoPath(fromDir: string, target: string): string {
+  const out: string[] = [];
+  for (const segment of `${fromDir}/${target}`.split("/")) {
+    if (segment === "" || segment === ".") continue;
+    if (segment === "..") out.pop();
+    else out.push(segment);
+  }
+  return out.join("/") + (target.endsWith("/") ? "/" : "");
+}
+
+/**
  * Repoint a link written for someone standing in the catalog repo.
  *
  * Three cases, and the first is the one that matters. These documents reference
@@ -130,24 +152,30 @@ function rootDir(): string {
  * section would be worse than the broken link it replaces. So a target that is
  * published here becomes an internal route; everything else points back at the
  * repo it was written for, with a trailing slash meaning a directory.
+ *
+ * `file` is the guide's own path under the catalog's `docs/`, which is what
+ * every relative target in it is written against.
  */
-export function rewriteGuideLinks(markdown: string): string {
+export function rewriteGuideLinks(markdown: string, file: string): string {
   const base = "https://github.com/nanohype/nanohype";
+  const fromDir = resolveRepoPath("docs", file).split("/").slice(0, -1).join("/");
+
   return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {
     if (/^(https?:|mailto:|#)/.test(target)) return whole;
+    if (target.startsWith("/")) return whole;
 
     const [path, hash = ""] = target.split("#");
     const anchor = hash ? `#${hash}` : "";
 
-    // Written relative to the catalog's docs/ directory, so a bare filename is a
-    // sibling document and `../x` is repo-root-relative.
-    const sibling = path.replace(/^\.\//, "");
-    const internal = ROUTE_BY_FILE.get(sibling);
+    const repoPath = resolveRepoPath(fromDir, path);
+
+    // A target that is also published here becomes an internal route. Keyed on
+    // the path under docs/, which is how GUIDES names its sources, so a link
+    // written as `../catalog.md` from spec/ and one written as `catalog.md`
+    // from docs/ both land on the same page.
+    const internal = ROUTE_BY_FILE.get(repoPath.replace(/^docs\//, ""));
     if (internal) return `](${internal}${anchor}${title})`;
 
-    if (path.startsWith("/")) return whole;
-
-    const repoPath = sibling.startsWith("../") ? sibling.slice(3) : `docs/${sibling}`;
     const kind = repoPath.endsWith("/") ? "tree" : "blob";
     return `](${base}/${kind}/main/${repoPath}${anchor}${title})`;
   });
@@ -188,7 +216,7 @@ export function guidesLoader(): Loader {
 
         // Drop the leading H1: the page already carries the title, and a second
         // one would put two first-level headings in the document outline.
-        const body = rewriteGuideLinks(content.replace(/^#\s+.*\n+/, ""));
+        const body = rewriteGuideLinks(content.replace(/^#\s+.*\n+/, ""), guide.file);
         store.set({
           id: guide.slug,
           data: { ...guide },

@@ -78,14 +78,43 @@ function rootDir(): string {
  * would be a 404 — the page would render, the links would be dead, and nothing
  * would report it. A trailing slash means a directory, which GitHub serves
  * under `tree` rather than `blob`.
+ *
+ * A link that climbs out of the repo means a *sibling checkout*, not a parent
+ * directory: the org layout puts every repo side by side, so an `AGENTS.md` in
+ * `eks-gitops` writes `../kx/AGENTS.md` to reach kx. Rewriting that against its
+ * own repo produces a path with `..` in it, which GitHub resolves to nothing.
+ * The first segment after climbing out is the repo name, so the link is
+ * repointed at that repo instead.
  */
 export function rewriteLinks(markdown: string, repo: string): string {
-  const base = `https://github.com/nanohype/${repo}`;
   return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {
     if (/^(https?:|mailto:|#|\/)/.test(target)) return whole;
-    const clean = target.replace(/^\.\//, "");
-    const kind = clean.endsWith("/") ? "tree" : "blob";
-    return `](${base}/${kind}/main/${clean}${title})`;
+
+    const trailing = target.endsWith("/") ? "/" : "";
+    const segments: string[] = [];
+    let climbed = 0;
+    for (const segment of target.split("/")) {
+      if (segment === "" || segment === ".") continue;
+      if (segment !== "..") segments.push(segment);
+      else if (segments.length > 0) segments.pop();
+      else climbed += 1;
+    }
+
+    // Climbing out of the repo lands in the org checkout, where the next
+    // segment names a sibling repo and the rest is a path inside it.
+    let owner = repo;
+    if (climbed > 0) {
+      const sibling = segments.shift();
+      // Climbing past the org root, or naming nothing after it, is a link that
+      // could not resolve anywhere. Left alone so it reads as what it is.
+      if (climbed > 1 || !sibling) return whole;
+      owner = sibling;
+    }
+
+    const path = segments.join("/");
+    if (!path) return `](https://github.com/nanohype/${owner}${title})`;
+    const kind = trailing ? "tree" : "blob";
+    return `](https://github.com/nanohype/${owner}/${kind}/main/${path}${trailing}${title})`;
   });
 }
 
