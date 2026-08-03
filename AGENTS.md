@@ -8,6 +8,16 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 - No application runtime, no eval suite, no coverage floor requirement
 - Biome is the lint/format gate; `astro check` is the type gate; CI also runs
   osv-scanner and a production build
+- `postbuild` runs two assertions over `dist/`, so they cover the generated
+  pages as well as the authored ones:
+  - `scripts/check-vocabulary.ts` — every `*.nanohype.dev` name is an API group
+    a control plane serves or a reserved label namespace, and every `kind:` is
+    one that group ships
+  - `scripts/check-links.ts` — every internal link and `#fragment` resolves,
+    every link into an org repo names a path that repo has at that ref, and
+    every generated section published exactly the pages its source declares.
+    Repo paths are checked against one tree listing per repo from the GitHub
+    API; unreachable listings warn locally and **fail** under `CI`
 
 ## Commands
 
@@ -15,7 +25,7 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 pnpm install
 pnpm lint            # biome check .
 pnpm check           # astro check
-pnpm build           # error pages + astro build + 500.html assertion
+pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```
 
