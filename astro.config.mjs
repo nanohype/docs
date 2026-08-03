@@ -84,6 +84,24 @@ export default defineConfig({
           ],
         },
         {
+          // Authored, not generated — the reasoning behind the shapes the rest
+          // of this site describes. Every other section renders something the
+          // org already ships; this is the part no generator can write.
+          label: "Decisions",
+          items: [
+            { label: "Overview", link: "/decisions/" },
+            { label: "Identity is bound, not annotated", link: "/decisions/identity-binding/" },
+            { label: "The kill switch changes AWS", link: "/decisions/kill-switch/" },
+            {
+              label: "A tenant's substrate is a declaration",
+              link: "/decisions/tenant-substrate/",
+            },
+            { label: "Layers are drawn by rate of change", link: "/decisions/layer-boundaries/" },
+            { label: "Crossplane orders the IaC", link: "/decisions/crossplane-ordering/" },
+            { label: "One account holds a product", link: "/decisions/one-account/" },
+          ],
+        },
+        {
           label: "Reference",
           items: [{ label: "Repos", link: "/repos/" }],
         },
