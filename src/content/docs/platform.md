@@ -34,7 +34,7 @@ The `Platform` CR is one of three artifacts every app ships:
 
 ## Runtime shapes
 
-Agent work runs in one of four shapes, picked by how long a unit of work lives:
+Agent work runs in one of three shapes, picked by how long a unit of work lives:
 
 - **AgentFleet** — a Deployment per agent, scaled by KEDA, behind a per-fleet
   NetworkPolicy. For work that is always on.
@@ -42,10 +42,8 @@ Agent work runs in one of four shapes, picked by how long a unit of work lives:
   on an isolating `RuntimeClass`. For work that is untrusted or one-shot.
 - **SandboxPool** — workers draining a Managed Agents self-hosted environment's
   queue, so Anthropic runs the agent loop and the cluster runs the tool calls.
-- **BatchJob** — one Bedrock batch-inference job, S3 in and S3 out. For work that
-  does not need to be online at all.
 
-All four run in the tenant's namespace, and the first two carry the tenant's
+All three run in the tenant's namespace, and the first two carry the tenant's
 identity: an `AgentFleet` Deployment and an `AgentSandbox` pod both run the
 tenant's own image under the tenant's ServiceAccount. There is no
 platform-supplied agent runtime and no shared tool server, which is the point —
