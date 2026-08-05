@@ -14,16 +14,25 @@
  *      plane serves, a reserved label namespace, or a hostname this site serves.
  *   2. Every `kind:` next to an `apiVersion:` in one of those groups is a kind
  *      that group ships.
+ *   3. Every resource this site DEFINES in prose — a list item that opens with a
+ *      bolded PascalCase name and a dash — is a kind that ships, or an upstream
+ *      kind named in UPSTREAM_KINDS.
  *
  * The second is the one that earns its keep. A manifest naming a resource the
  * API server would reject is indistinguishable from a correct one on the page,
  * and an agent reading this site as its front door will apply it and get an
  * error whose text says nothing about where it came from.
  *
- * What this does not do is judge prose. "AgentFleet runs <product>" is a claim
- * about the world that no lexical check can settle. That is what the generated
- * pages are for: the reference under /platform/resources/ has no independent
- * record to be wrong with, so there is nothing there to drift.
+ * The third exists because assertions 1 and 2 only ever look inside manifests,
+ * and this site mostly TALKS about resources rather than printing them. A tier
+ * deleted from the operator went on being published here as one of the platform's
+ * runtime shapes, in a definition list, with both checks green — the page named
+ * no apiVersion, so there was nothing for them to resolve.
+ *
+ * It is scoped to the definition-list shape on purpose, which is narrow enough to
+ * be exact: a `- **Name** —` opener is the site asserting that a thing exists and
+ * saying what it is. Ordinary prose is left alone — "AgentFleet runs <product>"
+ * is a claim about the world that no lexical check can settle.
  */
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -38,6 +47,35 @@ const DIST = "dist";
  * makes, not a line this file quietly grew.
  */
 const HOSTNAMES = new Set(["docs", "www"]);
+
+/**
+ * Kinds this site defines in prose that belong to somebody else's API — upstream
+ * Kubernetes, or an addon the platform composes with. They are legitimate
+ * definition-list entries and no nanohype control plane ships them, so assertion
+ * 3 would otherwise report every one.
+ *
+ * Deliberately explicit rather than pattern-matched. Every entry is a decision
+ * that this site is describing a foreign resource, and the alternative — a rule
+ * like "ignore anything ending in Policy" — would have silently absorbed the
+ * defect this check was written to catch.
+ */
+const UPSTREAM_KINDS = new Set([
+  "ResourceQuota", // core/v1
+  "NetworkPolicy", // networking.k8s.io/v1
+  "AppProject", // argoproj.io/v1alpha1
+]);
+
+/**
+ * A list item that opens with a bolded PascalCase name and an em/en dash: the
+ * shape this site uses to define a resource. Read off the raw HTML rather than
+ * the stripped text because `textOf` removes `<strong>`, and the bold is the
+ * signal that separates a definition from a mention.
+ *
+ * PascalCase with at least two humps keeps ordinary bolded nouns out — a
+ * `- **Fleet** — …` sentence is prose, `- **AgentFleet** — …` is a definition.
+ */
+const PROSE_DEFINITION =
+  /<li[^>]*>\s*(?:<p[^>]*>\s*)?<strong>(([A-Z][a-z0-9]+){2,})<\/strong>\s*(?:—|–|-)/g;
 
 /**
  * `tenants.nanohype.dev/` is a label namespace, not an API group — nothing
@@ -158,10 +196,29 @@ let pages = 0;
 let manifests = 0;
 let names = 0;
 
+const shippedKinds = new Set(resources.map((resource) => resource.kind));
+let definitions = 0;
+
 for await (const file of htmlFiles(DIST)) {
   pages += 1;
-  const text = textOf(await readFile(file, "utf8"));
+  const html = await readFile(file, "utf8");
+  const text = textOf(html);
   const page = file.slice(DIST.length + 1);
+
+  for (const match of html.matchAll(PROSE_DEFINITION)) {
+    const kind = match[1];
+    if (UPSTREAM_KINDS.has(kind)) continue;
+    definitions += 1;
+    if (!shippedKinds.has(kind)) {
+      violations.push({
+        file: page,
+        detail:
+          `defines "${kind}" as a platform resource, but no control plane ships that kind. ` +
+          `Shipped: ${[...shippedKinds].sort().join(", ")}. ` +
+          `If it belongs to an upstream API, add it to UPSTREAM_KINDS in this script.`,
+      });
+    }
+  }
 
   for (const match of text.matchAll(GROUP)) {
     names += 1;
@@ -222,7 +279,20 @@ if (violations.length > 0) {
 // site-wide sweep; the manifest count is how many places actually spell out an
 // apiVersion and a kind, and it is small because the pages mostly talk about
 // resources rather than print them. It grows as the site prints more.
+// A zero here would mean the definition scan matched nothing at all, which reads
+// identically to "every definition resolved" and is how this check would quietly
+// stop working if the site's markup changed.
+if (definitions === 0) {
+  console.error(
+    "\nThe prose-definition scan matched no resource definitions across the whole site.\n" +
+      "That is not a pass — it means PROSE_DEFINITION no longer matches the markup\n" +
+      "Starlight emits for `- **Kind** — …`, so assertion 3 is checking nothing.\n",
+  );
+  process.exit(1);
+}
+
 console.log(
-  `vocabulary ok — ${names} nanohype.dev name(s) and ${manifests} manifest(s) across ${pages} pages` +
+  `vocabulary ok — ${names} nanohype.dev name(s), ${manifests} manifest(s) and ` +
+    `${definitions} prose definition(s) across ${pages} pages` +
     ` resolve against ${resources.length} shipped resources in ${groups.size} groups.`,
 );
