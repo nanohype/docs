@@ -36,3 +36,16 @@ overrides:
   # frontmatter parser down a major version, and an unbounded `>=4.3.1` collapses
   # both lines to 5.x. The scoped form moves only the vulnerable resolution.
   js-yaml@4: "^4.3.1"
+
+# pnpm 11 turns an ignored build script into an install error where pnpm 10 only
+# warned, and it renamed the setting: the pnpm 10 spellings
+# (onlyBuiltDependencies, ignoredBuiltDependencies) are not read here and do not
+# warn about being ignored — verified by setting each and watching the install
+# fail on the same build. There is no key for "deliberately skipped", so a build
+# is either allowed or the install does not complete.
+#
+# esbuild arrives transitively through astro. Its platform binary comes from the
+# @esbuild/<platform> optional dependency, not from this script, which is why
+# pnpm 10 skipped it and the site built anyway.
+allowBuilds:
+  esbuild: true
