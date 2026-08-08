@@ -105,6 +105,15 @@ jobs:
           NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
           NANOHYPE_CRDS_DIR: ${{ github.workspace }}/.platform/charts/operator/crds
           NANOHYPE_XRDS_DIR: ${{ github.workspace }}/.fleet/apis
+          # `pnpm build` runs postbuild, and postbuild's link gate asks the API
+          # for one tree listing per org repo the pages link into. The token is
+          # for rate limit only — every repo it reads is public — but without
+          # one the anonymous limit is 60/hour per runner IP, and the gate needs
+          # ten listings. It fails rather than passing on a listing it could not
+          # read, so exhausting the limit blocks the deploy instead of shipping
+          # unchecked links. ci sets this on the same step; deploy runs the same
+          # build and needs it for the same reason.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
