@@ -102,6 +102,13 @@ export default defineConfig({
           ],
         },
         {
+          // Authored. The failure class a platform actually has, and the
+          // per-repo runbooks for the failures that have a procedure rather
+          // than a shape.
+          label: "Operating it",
+          items: [{ label: "How this fails", link: "/failure-modes/" }],
+        },
+        {
           label: "Reference",
           items: [{ label: "Repos", link: "/repos/" }],
         },
