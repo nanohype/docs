@@ -11,6 +11,22 @@
 # nothing here appears in package.json, and each was added because osv-scanner
 # — a required check — went red on the resolved lockfile.
 
+# pnpm 11 holds a package for 24h after publish before it will install it. The
+# floor is there so this tree is never the first consumer of a compromised
+# publish — a hijacked package is usually caught and unpublished within hours,
+# and waiting costs nothing on a dependency nobody is blocked on.
+#
+# Neither half of that applies to @shuttering. It is first-party: published from
+# a repo under the same ownership as this one, deliberately, and announced. There
+# is no third party to be compromised by, so the floor buys nothing here and only
+# delays a bump for three days.
+#
+# Scoped to @shuttering on purpose. @nanohype/* is published to the public
+# registry and consumed by people outside this org, so it keeps the floor and is
+# held to the same bar as any other public dependency.
+minimumReleaseAgeExclude:
+  - '@shuttering/*'
+
 overrides:
   # Clears the osv-scanner gate on the resolved tree; postcss arrives via astro.
   postcss: ">=8.5.18"
