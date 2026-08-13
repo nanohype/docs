@@ -1,29 +1,3 @@
-# pnpm settings live here, not in package.json.
-#
-# pnpm 11 stopped reading the `pnpm` field in package.json entirely, and it does
-# so without failing — it prints "The following keys were ignored" and installs
-# anyway. An override block left behind in package.json therefore stops applying
-# the moment the package manager is bumped, and the tree silently relocks onto
-# the versions these floors exist to keep out. pnpm 10 already reads this file,
-# so the settings live in one place across both.
-#
-# Every entry below is a floor over a transitive dependency, not a direct one:
-# nothing here appears in package.json, and each was added because osv-scanner
-# — a required check — went red on the resolved lockfile.
-
-# pnpm 11 holds a package for 24h after publish before it will install it. The
-# floor is there so this tree is never the first consumer of a compromised
-# publish — a hijacked package is usually caught and unpublished within hours,
-# and waiting costs nothing on a dependency nobody is blocked on.
-#
-# Neither half of that applies to @shuttering. It is first-party: published from
-# a repo under the same ownership as this one, deliberately, and announced. There
-# is no third party to be compromised by, so the floor buys nothing here and only
-# delays a bump for three days.
-#
-# Scoped to @shuttering on purpose. @nanohype/* is published to the public
-# registry and consumed by people outside this org, so it keeps the floor and is
-# held to the same bar as any other public dependency.
 minimumReleaseAgeExclude:
   - '@shuttering/*'
 
@@ -51,7 +25,7 @@ overrides:
   # which the advisory does not cover: an unscoped `^4.3.1` drags the site's own
   # frontmatter parser down a major version, and an unbounded `>=4.3.1` collapses
   # both lines to 5.x. The scoped form moves only the vulnerable resolution.
-  js-yaml@4: "^4.3.1"
+  js-yaml@4: "^5.0.0"
 
 # pnpm 11 turns an ignored build script into an install error where pnpm 10 only
 # warned, and it renamed the setting: the pnpm 10 spellings
