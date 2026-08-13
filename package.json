@@ -29,6 +29,6 @@
     "@astrojs/check": "^0.9.9",
     "@biomejs/biome": "2.5.7",
     "@nanohype/error-pages": "^0.1.0",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.0"
   }
 }
