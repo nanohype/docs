@@ -37,13 +37,13 @@ jobs:
       # `workflow_run` checks out the default branch at HEAD, not the commit
       # that triggered the run. On a busy main those differ, and the deploy
       # would ship a commit CI never looked at.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: lts/*
           cache: pnpm
@@ -56,7 +56,7 @@ jobs:
       # the catalog as it stands, and a catalog that will not load fails the
       # deploy rather than publishing an empty reference.
       - name: Checkout the catalog
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: nanohype/nanohype
           path: .org/nanohype
@@ -73,7 +73,7 @@ jobs:
           done
 
       - name: Checkout the atlas
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: nanohype/.github
           path: .atlas
@@ -83,7 +83,7 @@ jobs:
       # and kind on the site against them. Sparse: the definitions are the whole
       # input.
       - name: Checkout the platform CRDs
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: nanohype/eks-agent-platform
           path: .platform
@@ -91,7 +91,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Checkout the fleet API
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: nanohype/eks-fleet
           path: .fleet
@@ -115,7 +115,7 @@ jobs:
           # build and needs it for the same reason.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
