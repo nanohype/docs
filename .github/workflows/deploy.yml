@@ -122,7 +122,7 @@ jobs:
 
       - name: Sync and invalidate
         env:
-          BUCKET: nanohype-docs-site
+          BUCKET: nanohype-docs-site-767397986924
           DISTRIBUTION_ID: ${{ vars.DOCS_DISTRIBUTION_ID }}
         run: |
           aws s3 sync dist/ "s3://$BUCKET/" --delete
