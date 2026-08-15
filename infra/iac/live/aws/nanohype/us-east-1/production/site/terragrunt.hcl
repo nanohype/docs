@@ -8,6 +8,12 @@ include "envcommon" {
 }
 
 locals {
+  # Injected at apply time so the account id never lands in a tracked file.
+  # This repo is public; a hardcoded account-qualified name would publish the
+  # destination account id. An unset var produces a nonsense bucket name and
+  # the apply fails loudly rather than colliding with the live origin.
+  account_id = get_env("TERRAGRUNT_ACCOUNT_ID", "000000000000")
+
   # Content-Security-Policy for the built Starlight docs bundle:
   #   - script-src: client JS is bundled same-origin (/_astro/*.js) → 'self';
   #     Starlight emits a few inline <script> blocks (theme init, view
@@ -39,19 +45,29 @@ inputs = {
   # which is managed elsewhere (adopted via data source, not created here).
   domain      = "docs.nanohype.dev"
   hosted_zone = "nanohype.dev"
+
+  # create_zone MUST stay false. The parent zone already exists in this account
+  # (Z01486163EQUBJKF0RTR9). Flipping this creates a second zone for
+  # docs.nanohype.dev that nothing delegates to.
+  #
+  # Until the NS switch that parent is inert — ACM cannot resolve a validation
+  # record placed in it — so the first apply runs with
+  # `-var create_validation_records=false` and the records are published from
+  # the old account. Pass it as -var, never TF_VAR_*. See the note at the foot
+  # of nanohype.dev's site/terragrunt.hcl.
   create_zone = false
   enable_www  = false
 
-  # name_prefix derives the deploy role (nanohype-docs-site-deploy) and the
-  # www-redirect bucket name (unused, enable_www = false); the origin bucket is
-  # pinned to its existing name so the live content bucket is adopted, not
-  # replaced.
-  name_prefix      = "nanohype-docs-"
-  site_bucket_name = "nanohype-docs-site"
+  # name_prefix scopes the module's derived names (e.g. the OAC) for docs.
+  name_prefix = "nanohype-docs-"
 
-  # nanohype's publish role lives in the standalone deploy component in nanohype.dev —
-  # one role shared across nanohype.dev + docs.nanohype.dev — so this site module must
-  # not create a colliding one. CI assumes it via the AWS_DEPLOY_ROLE_ARN variable.
+  # Account-qualified, and permanently so. S3 names are global; 351619759866
+  # still holds `nanohype-docs-site` and will until after the cutover.
+  site_bucket_name = "nanohype-docs-site-${local.account_id}"
+
+  # The publish role for docs is owned by the standalone deploy component in
+  # nanohype.dev (github_repos includes nanohype/docs), so this module must not
+  # create a colliding role.
   create_deploy_role = false
   github_repository  = "nanohype/docs"
 
