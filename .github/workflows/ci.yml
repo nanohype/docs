@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     # Bounded because two steps in this job reach the network on their own:
     # postbuild's link gate calls the GitHub API, and `fetch the agent
-    # contracts` curls nine raw files. Without a ceiling a hung connection
+    # contracts` curls eight raw files. Without a ceiling a hung connection
     # rides GitHub's 6-hour default, holding a runner and telling nobody.
     timeout-minutes: 20
     steps:
