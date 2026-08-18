@@ -1,4 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>nanohype/.github"]
+  "description": [
+    "Shared org posture, plus the one hold that is local to this repo: TypeScript stays on the 6.x line.",
+    "`pnpm check` runs `astro check`, which drives @astrojs/language-server, which reads TypeScript through its programmatic compiler API. TypeScript 7 is the native port and does not expose that API — the check exits 1 with 'The TypeScript module loaded does not expose the programmatic API that astro check relies on'. So a 7.x bump here does not fail a type error, it removes the type gate entirely. Tracked upstream at https://github.com/withastro/roadmap/discussions/1321 ('TypeScript Native (tsgo / TypeScript 7) compatibility tracking') — a discussion, not an issue, so the full URL is written out rather than shorthand that resolves to a 404. When the language server supports the native compiler, drop this rule.",
+    "The rest of the estate already splits on exactly this line: incident-response, portal/web and every eks-agent-platform package sit on ^6.0.3 because typedoc and openapi-typescript read TypeScript programmatically too, while nanohype's own packages, which do not, are on ^7.0.0. This repo belongs on the 6.x side and the package.json caret says so; this rule is what stops a major PR from moving it anyway.",
+    "The caret alone was not enough once. A 7.x major PR merged green because CI ran no typecheck at all, so nothing could contradict it — the gate and the hold are one fix, not two, and removing either brings the failure back.",
+    "ORDERING: the preset's own notes warn that a consumer's packageRules are appended after its and later rules win. That is the mechanism relied on here. This rule deliberately sets nothing but allowedVersions — no automerge, no minimumReleaseAge, no schedule — so it cannot reach past its own package and defeat the security posture the preset keeps last."
+  ],
+  "extends": ["github>nanohype/.github"],
+  "packageRules": [
+    {
+      "description": "Hold TypeScript on 6.x — astro check needs the programmatic compiler API that TypeScript 7 does not expose. See the note above before relaxing this.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    }
+  ]
 }
