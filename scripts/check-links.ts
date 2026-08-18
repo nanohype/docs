@@ -124,7 +124,13 @@ async function treeOf(repo: string, ref: string): Promise<Set<string> | undefine
 
   let payload: { tree?: { path: string }[]; truncated?: boolean };
   try {
-    const response = await fetch(url, { headers });
+    // Node's fetch has no default timeout, so a connection that opens and then
+    // stalls never returns. This gate runs last in the build, which is the
+    // worst place to hang from: the job holds a runner until the workflow
+    // ceiling with no output. Ten seconds is far above a healthy tree listing
+    // and a timeout lands in `unreachable` like any other failure — reported,
+    // and fatal under CI rather than silently skipped.
+    const response = await fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     payload = await response.json();
   } catch (error) {

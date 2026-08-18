@@ -8,6 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Bounded because two steps in this job reach the network on their own:
+    # postbuild's link gate calls the GitHub API, and `fetch the agent
+    # contracts` curls nine raw files. Without a ceiling a hung connection
+    # rides GitHub's 6-hour default, holding a runner and telling nobody.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
@@ -89,15 +94,36 @@ jobs:
           # read: a check that silently stops checking is the defect it exists
           # to catch.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Lint / format gate. Biome, pinned via npx, checks and formats the source
-      # in one pass, exiting
-      # non-zero on any lint violation or unformatted file.
+      # Type gate. `astro check` typechecks the .astro components and the TS
+      # under src/ together, which nothing else here does: `astro build` emits
+      # without typechecking, and Biome lints without reading types.
+      #
+      # It runs in CI because leaving it to a local `pnpm check` is what let a
+      # TypeScript 7 bump merge green while asserting the repo "typechecks with
+      # it directly" — an assertion no job was in a position to contradict.
+      # TypeScript 7 does not expose the programmatic compiler API this drives,
+      # so renovate.json holds the 6.x line; the hold and this step are one fix.
+      #
+      # After the build: both need the checked-out catalog, and a content-load
+      # failure produces a far better message from the loaders than from the
+      # type checker downstream of them.
+      - name: typecheck (astro check)
+        run: pnpm run check
+        env:
+          NANOHYPE_CATALOG_DIR: ${{ github.workspace }}/.org/nanohype
+          NANOHYPE_ATLAS_DIR: ${{ github.workspace }}/.atlas/profile/assets/atlas
+          NANOHYPE_CRDS_DIR: ${{ github.workspace }}/.platform/charts/operator/crds
+          NANOHYPE_XRDS_DIR: ${{ github.workspace }}/.fleet/apis
+      # Lint / format gate. Biome runs from the pinned devDependency and exits
+      # non-zero on any lint violation or unformatted file. It reports only —
+      # `pnpm format` is the writing half, and CI never writes.
       - name: lint (biome)
         run: pnpm run lint
 
   merge-gate:
     name: merge gate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs:
       [
         build,
