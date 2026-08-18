@@ -25,7 +25,18 @@ export interface AtlasEntry {
   svg: string;
 }
 
-export interface AtlasPerspective extends AtlasEntry {
+/**
+ * A manifest entry joined to the intrinsic size of the diagram it names.
+ *
+ * The size is not in `atlas.json` — it is read from the diagram itself, so it
+ * cannot disagree with the picture it describes.
+ */
+export interface AtlasDiagram extends AtlasEntry {
+  width: number;
+  height: number;
+}
+
+export interface AtlasPerspective extends AtlasDiagram {
   /** The authored reading notes for this view. */
   notes: string[];
 }
@@ -56,8 +67,49 @@ export function atlasFailure(dir: string, detail: string): Error {
   );
 }
 
+/**
+ * The intrinsic size of a diagram, read from its own root element.
+ *
+ * An `<img>` carrying no width and height reserves no space until the file
+ * arrives, so everything below it moves once it does. These diagrams are
+ * 135-149 KB each and they *are* the content of the page they sit on, which
+ * makes that the whole view jumping rather than a detail settling.
+ *
+ * One CSS `aspect-ratio` would not fix it, because the perspectives do not
+ * share a shape: across the eleven they run from 2172x1160 to 1504x1920, nine
+ * distinct ratios. A single constant would reserve the wrong box on nearly all
+ * of them — a different wrong answer, plus letterboxing. So the size is read
+ * per diagram, from the same emit as the picture and the caption, and cannot
+ * drift when a perspective is re-laid-out.
+ *
+ * `viewBox` is preferred over the width and height attributes: it is the
+ * coordinate system the diagram is drawn in, and the one a renderer falls back
+ * to when the attributes are absent.
+ */
+function readDimensions(svg: string): { width: number; height: number } | undefined {
+  // The root element is the first tag in the file; a slice keeps this off the
+  // ~140 KB of path data behind it.
+  const root = svg.slice(0, 1024);
+
+  const viewBox = root.match(/viewBox="\s*[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)/);
+  if (viewBox) {
+    const width = Number(viewBox[1]);
+    const height = Number(viewBox[2]);
+    if (width > 0 && height > 0) return { width, height };
+  }
+
+  const attrs = root.match(/\bwidth="([\d.]+)"[^>]*\bheight="([\d.]+)"/);
+  if (attrs) {
+    const width = Number(attrs[1]);
+    const height = Number(attrs[2]);
+    if (width > 0 && height > 0) return { width, height };
+  }
+
+  return undefined;
+}
+
 /** Reads and validates the emitted manifest. Shared by the sync script and the pages. */
-export async function readAtlasManifest(dir: string): Promise<AtlasEntry[]> {
+export async function readAtlasManifest(dir: string): Promise<AtlasDiagram[]> {
   const manifestPath = join(dir, "atlas.json");
   if (!existsSync(manifestPath)) {
     throw atlasFailure(dir, "atlas.json is not there. Run `pnpm emit` in the atlas project.");
@@ -86,7 +138,26 @@ export async function readAtlasManifest(dir: string): Promise<AtlasEntry[]> {
     );
   }
 
-  return entries;
+  // Read each diagram for its own dimensions. A diagram whose root element
+  // declares neither a viewBox nor a width and height cannot have its space
+  // reserved, and a page that silently stops reserving is the defect this
+  // exists to prevent — so it fails the build like any other missing input.
+  const diagrams: AtlasDiagram[] = [];
+  const unsized: string[] = [];
+  for (const entry of entries) {
+    const size = readDimensions(await readFile(join(dir, entry.svg), "utf8"));
+    if (size) diagrams.push({ ...entry, ...size });
+    else unsized.push(entry.svg);
+  }
+
+  if (unsized.length > 0) {
+    throw atlasFailure(
+      dir,
+      `${unsized.length} diagram(s) declare no viewBox and no width/height on their root element, so a page cannot reserve their space before they load: ${unsized.join(", ")}.`,
+    );
+  }
+
+  return diagrams;
 }
 
 /**

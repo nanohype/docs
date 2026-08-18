@@ -30,7 +30,20 @@ const sourceUrl =
   <p class="blurb">{perspective.blurb}</p>
 
   <figure>
-    <img src={`/atlas/${perspective.svg}`} alt={`${perspective.name} — ${perspective.blurb}`} />
+    {/*
+      width and height are the diagram's own, read from its root element by
+      src/lib/atlas.ts. They are what lets the browser reserve the right box
+      before 135-149 KB of SVG arrives — without them this figure is zero-high
+      until it lands, and the notes and pager below jump down the moment it
+      does. The CSS below still governs the rendered size; these only supply
+      the ratio.
+    */}
+    <img
+      src={`/atlas/${perspective.svg}`}
+      width={perspective.width}
+      height={perspective.height}
+      alt={`${perspective.name} — ${perspective.blurb}`}
+    />
   </figure>
 
   {perspective.notes.map((note) => <p>{note}</p>)}
