@@ -1,17 +1,50 @@
+# pnpm settings live here, not in package.json.
+#
+# pnpm 11 stopped reading the `pnpm` field in package.json entirely, and it does
+# so without failing — it prints "The following keys were ignored" and installs
+# anyway. An override block left behind in package.json therefore stops applying
+# the moment the package manager is bumped, and the tree silently relocks onto
+# the versions these floors exist to keep out. pnpm 10 already reads this file,
+# so the settings live in one place across both.
+#
+# Every entry below is a floor over a transitive dependency, not a direct one:
+# nothing here appears in package.json, and each was added because osv-scanner
+# — a required check — went red on the resolved lockfile.
+#
+# A floor is NOT a version to keep current, and this is the one thing to know
+# before editing this block. Each entry is bounded by what its *parent* package
+# declares, so the right value is the lowest one that clears the advisory inside
+# the range the parent supports — not the newest release of the package. A bump
+# past the parent's declared range resolves a dependency the parent never agreed
+# to, which is a break waiting on whichever interop currently hides it. Renovate
+# does not distinguish the two: it reads these as ordinary dependency pins and
+# proposes majors for them, and such a PR has been merged here before. Check the
+# parent's declared range before accepting one.
+#
+# The other half of that rule: when the parent's own floor rises past the
+# advisory, the entry has no work left to do and should be deleted rather than
+# carried. An override that changes nothing is one more thing to be bumped
+# wrongly later.
+
+# pnpm 11 holds a package for 24h after publish before it will install it. The
+# floor is there so this tree is never the first consumer of a compromised
+# publish — a hijacked package is usually caught and unpublished within hours,
+# and waiting costs nothing on a dependency nobody is blocked on.
+#
+# Neither half of that applies to @shuttering. It is first-party: published from
+# a repo under the same ownership as this one, deliberately, and announced. There
+# is no third party to be compromised by, so the floor buys nothing here and only
+# delays a bump for three days.
+#
+# Scoped to @shuttering on purpose. @nanohype/* is published to the public
+# registry and consumed by people outside this org, so it keeps the floor and is
+# held to the same bar as any other public dependency.
 minimumReleaseAgeExclude:
   - '@shuttering/*'
 
 overrides:
   # Clears the osv-scanner gate on the resolved tree; postcss arrives via astro.
   postcss: ">=8.5.18"
-
-  # GHSA-2v37-7h3g-55p8 (CVSS 8.2) — a custom generator loops indefinitely when
-  # size is zero. Reached through postcss.
-  #
-  # The caret is load-bearing and must not be relaxed to `>=`: the open-ended
-  # form resolves to nanoid 6, which is ESM-only and is not the API postcss
-  # calls. The caret keeps the fix inside the 3.x line the parent supports.
-  nanoid: "^6.0.0"
 
   # GHSA-7p8r-x3mc-p8w7 (HIGH) — host confusion; a URL whose authority is
   # introduced with a backslash parses to a different host than a resolver
