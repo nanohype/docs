@@ -53,11 +53,16 @@ jobs:
       # reproduces that layout — only the one file each, since nothing else is
       # read. `curl -f` exits non-zero on a 404, so a renamed or deleted
       # contract fails here rather than vanishing from the published list.
+      #
+      # `--max-time` because curl bounds only the connect phase by default: a
+      # connection that opens and then stalls mid-transfer never returns. The
+      # job ceiling would cap that at twenty minutes; thirty seconds is far
+      # above a file of this size, so the bound fires only on a dead transfer.
       - name: fetch the agent contracts
         run: |
           for r in landing-zone eks-gitops eks-agent-platform kx cloudgov fab portal eks-fleet; do
             mkdir -p ".org/$r"
-            curl -fsSL -o ".org/$r/AGENTS.md" \
+            curl -fsSL --max-time 30 -o ".org/$r/AGENTS.md" \
               "https://raw.githubusercontent.com/nanohype/$r/main/AGENTS.md"
           done
       # The /atlas/ pages render the diagrams that repo emits, and caption them
