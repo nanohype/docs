@@ -21,6 +21,13 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The unit tier, over the pure functions in src/lib/. First because it is
+      # the cheapest signal in the job: it needs none of the five checkouts
+      # below and none of the network, so a broken rewriter fails in seconds
+      # rather than after a four-minute build. The postbuild gates remain the
+      # tier that actually proves the published site is sound.
+      - name: test (vitest)
+        run: pnpm test
       # Supply-chain gate. osv-scanner checks the committed pnpm-lock.yaml against
       # the OSV database and exits non-zero on a known vulnerability: an
       # endpoint-independent, maintained hard gate. Pinned to an exact version.

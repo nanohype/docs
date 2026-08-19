@@ -12,10 +12,15 @@
  * copy of an agent's instructions is worse than no copy.
  */
 
-import { z } from "astro:content";
 import { resolve } from "node:path";
 import { KNOWN_CONTRACT_REPOS, LocalSource, loadContract } from "@nanohype/sdk";
 import type { Loader } from "astro/loaders";
+// `astro/zod` rather than `astro:content`. Both hand back the same `z` — the
+// virtual module re-exports this one — but a virtual module resolves only
+// inside Astro's Vite pipeline, so importing this file anywhere else (a test,
+// a script) fails on the specifier before reaching the code. `z` is used here
+// only by the exported schema below; the link rewriter never touches it.
+import { z } from "astro/zod";
 
 /**
  * What each repo is for, and the boundary it owns.
@@ -84,7 +89,14 @@ function rootDir(): string {
  * `eks-gitops` writes `../kx/AGENTS.md` to reach kx. Rewriting that against its
  * own repo produces a path with `..` in it, which GitHub resolves to nothing.
  * The first segment after climbing out is the repo name, so the link is
- * repointed at that repo instead.
+ * repointed at that repo instead — but only when that segment actually names a
+ * repo whose contract this site publishes. `../README.md` is an author reaching
+ * up for a file, not for a sibling, and taking `README.md` as a repo name
+ * points the link at one that does not exist.
+ *
+ * Anything that cannot be resolved — climbing past the org root, naming nothing
+ * after the climb, or naming something that is not a known repo — is returned
+ * exactly as written, so it reads as what it is.
  */
 export function rewriteLinks(markdown: string, repo: string): string {
   return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {
@@ -108,6 +120,18 @@ export function rewriteLinks(markdown: string, repo: string): string {
       // Climbing past the org root, or naming nothing after it, is a link that
       // could not resolve anywhere. Left alone so it reads as what it is.
       if (climbed > 1 || !sibling) return whole;
+      // The same rule, one case further on: climbing out only means a sibling
+      // repo when the next segment actually names one. An author reaching up
+      // for a file instead — `../README.md` — has `README.md` shifted off as
+      // the repo name, and the link becomes a repo by that name that does not
+      // exist. Nothing downstream catches it: the URL carries no `/blob/` or
+      // `/tree/` segment, so check-links.ts records no path to verify.
+      //
+      // A sibling checkout is exactly the set of repos whose contracts this
+      // site publishes, so that is what it is checked against. The cast widens
+      // a literal-union type that would otherwise reject the arbitrary string
+      // being asked about — which is the whole question here.
+      if (!(KNOWN_CONTRACT_REPOS as readonly string[]).includes(sibling)) return whole;
       owner = sibling;
     }
 

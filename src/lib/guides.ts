@@ -13,10 +13,11 @@
  * copied into this repo.
  */
 
-import { z } from "astro:content";
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Loader } from "astro/loaders";
+// `astro/zod`, not `astro:content` — see the note in src/lib/contracts.ts.
+import { z } from "astro/zod";
 
 interface GuideSource {
   /** Route slug under /building/. */
@@ -175,6 +176,17 @@ export function rewriteGuideLinks(markdown: string, file: string): string {
     // from docs/ both land on the same page.
     const internal = ROUTE_BY_FILE.get(repoPath.replace(/^docs\//, ""));
     if (internal) return `](${internal}${anchor}${title})`;
+
+    // A target that collapsed to nothing — `..` from docs/, say — has no path
+    // to serve under blob or tree, and emitting one anyway produces exactly the
+    // 404 the segment-dropping above exists to avoid. The repo root is the
+    // honest answer, and the same one rewriteLinks gives for an empty path.
+    //
+    // Collapsing has two spellings, because resolveRepoPath re-appends the
+    // trailing slash after joining: `..` leaves "" and `../` leaves "/". Only
+    // testing the first left the second emitting `/tree/main//`, which is the
+    // same dead link wearing a slash.
+    if (!repoPath.replace(/\/+$/, "")) return `](${base}${anchor}${title})`;
 
     const kind = repoPath.endsWith("/") ? "tree" : "blob";
     return `](${base}/${kind}/main/${repoPath}${anchor}${title})`;
