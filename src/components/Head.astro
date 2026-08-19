@@ -34,6 +34,13 @@ function metaContent(key: string): string | undefined {
 const title = metaContent("og:title");
 const description = metaContent("og:description");
 
+// Only when the page has not already said something. These tags are appended
+// after Starlight's rather than merged into them, so an unconditional robots
+// directive does not override a page's own — it sits beside it. 404 and 500
+// both set `noindex`, and a second tag saying `index` on the same page is a 404
+// asking to be indexed.
+const hasRobots = head.some((entry) => entry.tag === "meta" && entry.attrs?.name === "robots");
+
 // Absolute, because a share crawler does not resolve relative URLs. `site` is
 // set in astro.config.mjs and is the same origin the canonical tag uses.
 const image = new URL("/og.png", Astro.site).href;
@@ -50,7 +57,7 @@ const image = new URL("/og.png", Astro.site).href;
 {description && <meta name="twitter:description" content={description} />}
 <meta name="twitter:image" content={image} />
 
-<meta name="robots" content="index,follow" />
+{!hasRobots && <meta name="robots" content="index,follow" />}
 
 {/*
   The machine-readable summary of this site, in the format an agent looks for.

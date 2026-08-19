@@ -10,18 +10,23 @@
  * Runs against `dist/`, so it covers the authored pages and the generated ones
  * together, and it sees what a reader sees rather than what a source file says.
  *
- * Four assertions:
+ * Five assertions:
  *
  *   1. Every site-internal link resolves to a page or asset that was built.
  *   2. Every `#fragment` exists as an id on the page it points at.
  *   3. Every link into an org repo names a path that repo actually has, at the
  *      ref the link names.
  *   4. Every generated section published exactly the pages its source declares.
+ *   5. Every route `/llms.txt` publishes is a page this build produced.
  *
  * The fourth is the freshness half. The generators cannot ship a page describing
  * something that does not exist — they read the source of truth — but they can
  * quietly ship *fewer* pages than the source has, and a section that lost an
  * entry looks identical to one that never had it.
+ *
+ * The fifth covers the one file the HTML sweep cannot see. `/llms.txt` is
+ * markdown, and it is read by something that will not notice a 404 and try
+ * again.
  */
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -263,6 +268,50 @@ for (const { section, source, routes } of expected) {
   }
 }
 
+/* ── 5: the agent index ──────────────────────────────────────────────────── */
+
+/**
+ * `/llms.txt` is markdown, not HTML, so the sweep above never sees it — and it
+ * is the one file on this site written to be read by something that will not
+ * notice a 404 and try again. It is generated from the collections, which makes
+ * a broken entry a route/id divergence rather than a typo: exactly the kind that
+ * ships green.
+ *
+ * The origin comes off the homepage's own canonical tag rather than being
+ * spelled again here, so this cannot disagree with `site` in astro.config.
+ */
+let llmsEntries = 0;
+const llms = await readFile(join(DIST, "llms.txt"), "utf8").catch(() => undefined);
+if (!llms) {
+  fail("/llms.txt", "was not built. seo-baseline lists it among the required files.");
+} else {
+  const home = await readFile(join(DIST, "index.html"), "utf8");
+  const origin = home.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
+
+  if (!origin) {
+    fail(
+      "/llms.txt",
+      "could not be checked: the homepage carries no canonical URL to resolve against.",
+    );
+  } else {
+    const entries = [...llms.matchAll(/^- \[[^\]]+\]\(([^)]+)\)/gm)].map((m) => m[1]);
+    llmsEntries = entries.length;
+    if (entries.length === 0) {
+      fail("/llms.txt", "lists no entries at all — the generator matched nothing.");
+    }
+    for (const url of entries) {
+      if (!url.startsWith(origin)) {
+        fail("/llms.txt", `lists "${url}", which is not on this origin.`);
+        continue;
+      }
+      const route = `/${url.slice(origin.length)}`;
+      if (!routeOf(route)) {
+        fail("/llms.txt", `lists "${url}", which is not a page this build produced.`);
+      }
+    }
+  }
+}
+
 /* ── report ──────────────────────────────────────────────────────────────── */
 
 if (unreachable.length > 0) {
@@ -316,6 +365,7 @@ for (const [key, targets] of repoLinks) {
 console.log(
   `links ok — every internal link and anchor across ${htmlByRoute.size} pages resolves,` +
     ` ${checkedRepoLinks} link(s) into ${trees.size} org repo tree(s) exist,` +
-    ` and ${expected.length} generated sections match their sources.` +
+    ` ${expected.length} generated sections match their sources,` +
+    ` and all ${llmsEntries} route(s) in llms.txt were published.` +
     (skippedRepoLinks > 0 ? ` ${skippedRepoLinks} repo link(s) went unchecked.` : ""),
 );
