@@ -13,15 +13,26 @@ const page = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+type Node = Record<string, unknown>;
+
+/**
+ * The nodes of a graph. Throws rather than returning nothing when the result is
+ * absent, so a case that produced no graph fails as a missing graph instead of
+ * as an empty one.
+ */
+function graphOf(result: Node | undefined): Node[] {
+  if (!result) throw new Error("expected a graph, and there was none");
+  return result["@graph"] as Node[];
+}
+
 /** The nodes of a graph, by `@type`. */
-function nodes(result: Record<string, unknown> | undefined) {
-  return (result?.["@graph"] as Record<string, unknown>[]).map((n) => n["@type"]);
+function nodes(result: Node | undefined) {
+  return graphOf(result).map((n) => n["@type"]);
 }
 
 /** Every `@id` a node points at, anywhere in the graph. */
-function references(result: Record<string, unknown> | undefined): string[] {
-  const graph = result?.["@graph"] as Record<string, unknown>[];
-  return graph.flatMap((node) =>
+function references(result: Node | undefined): string[] {
+  return graphOf(result).flatMap((node) =>
     Object.values(node).flatMap((value) =>
       typeof value === "object" && value !== null && "@id" in value
         ? [(value as { "@id": string })["@id"]]
@@ -54,7 +65,7 @@ describe("structuredData", () => {
     });
 
     it("carries the article's own values", () => {
-      const article = (result?.["@graph"] as Record<string, unknown>[])[2];
+      const article = graphOf(result)[2];
       expect(article).toMatchObject({
         "@id": `${ORIGIN}quickstart/#article`,
         headline: "Quickstart",
@@ -74,7 +85,7 @@ describe("structuredData", () => {
     });
 
     it("gives the site the description the article node would have carried", () => {
-      const site = (result?.["@graph"] as Record<string, unknown>[])[1];
+      const site = graphOf(result)[1];
       expect(site.description).toBe(page().description);
     });
   });
@@ -89,9 +100,7 @@ describe("structuredData", () => {
       ["the home page", page({ url: ORIGIN })],
     ])("%s", (_name, identity) => {
       const result = structuredData(identity);
-      const defined = new Set(
-        (result?.["@graph"] as Record<string, unknown>[]).map((n) => n["@id"] as string),
-      );
+      const defined = new Set(graphOf(result).map((n) => n["@id"] as string));
       for (const reference of references(result)) {
         expect(defined).toContain(reference);
       }
@@ -99,6 +108,6 @@ describe("structuredData", () => {
   });
 
   it("names the schema.org context, without which the types mean nothing", () => {
-    expect(structuredData(page())?.["@context"]).toBe("https://schema.org");
+    expect(structuredData(page())).toMatchObject({ "@context": "https://schema.org" });
   });
 });
