@@ -3,29 +3,22 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
 /**
- * Asserts that the commands this repo declares, documents and runs are the
- * same set.
+ * Asserts that the commands this repo declares, documents and runs are one set.
  *
- * Three artifacts describe the same thing and are maintained separately:
- * `package.json`'s scripts, the command block in each of the three files a
- * contributor or an agent reads, and the `run:` steps in `ci.yml`. Nothing
- * couples them, and they have already come apart in both directions.
+ * Three artifacts describe the same commands and are maintained separately:
+ * `package.json`'s scripts, the command block in each file a contributor or an
+ * agent reads, and the `run:` steps in `ci.yml`. Each can be internally correct
+ * while the set disagrees, and both directions of disagreement are silent.
  *
- * Once a gate was documented and not run: `pnpm check` was declared as a
- * script and named in all three files as the type gate, and appeared zero
- * times in `ci.yml`. A TypeScript 7 bump then merged green while asserting the
- * repo "typechecks with it directly", because no job was in a position to
- * contradict it. Assertion 3 below fails on that commit.
+ * A gate that is documented but unwired reports nothing when it stops working,
+ * because every other signal — the script, the three files, a reviewer's
+ * memory — still says it exists. A gate that runs but is undocumented is one
+ * nobody knows to reach for. Nothing else in the build compares the three.
  *
- * Once a gate was run and not documented: `pnpm test` was added with a unit
- * tier and wired into CI, and none of the three files learned about it — one
- * of them still described the repo as having no test surface. Assertion 1
- * fails on that.
- *
- * This lives beside check-links.ts and check-vocabulary.ts because it asserts
- * something about the repo rather than about a function, which is where a
- * reader looks for that. It runs under vitest rather than in postbuild because
- * it reads source, not `dist/`, so it needs no build.
+ * It sits beside check-links.ts and check-vocabulary.ts, which is where an
+ * assertion about the repo belongs rather than one about a function. It runs
+ * under vitest rather than in postbuild because it reads source, not `dist/`,
+ * so it needs no build.
  */
 
 interface PackageJson {
@@ -73,12 +66,11 @@ function pnpmCommandsIn(text: string): Set<string> {
 /**
  * The shell of every `run:` step in a workflow.
  *
- * Parsed, not grepped, and the distinction is the point. `ci.yml` mentions
- * `pnpm format` in a comment explaining that CI deliberately never writes, so
- * a text search for it reports a gate as wired that nothing invokes — the
- * right string in the wrong place. Reading `run:` values is what makes
- * assertion 3 able to tell "the gate runs" from "the gate is named somewhere
- * in this file". Do not simplify this to a grep.
+ * Parsed rather than searched as text. A workflow names commands in its
+ * comments as well as its steps — `ci.yml` explains there that CI never runs
+ * the formatter — so a text search reports a gate as wired that nothing
+ * invokes. Only the `run:` values separate an invoked command from a mentioned
+ * one.
  */
 function runSteps(workflow: string): string[] {
   const parsed = parse(readFileSync(workflow, "utf8")) as {
