@@ -15,7 +15,8 @@
  */
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
+import { siblingDir } from "./checkouts.ts";
 
 export interface AtlasEntry {
   index: number;
@@ -41,17 +42,9 @@ export interface AtlasPerspective extends AtlasDiagram {
   notes: string[];
 }
 
-/**
- * Where the emitted atlas lives. `nanohype/.github` is a sibling checkout like
- * every other org repo, so the default points into it; CI overrides it.
- *
- * Resolved against the project root rather than `import.meta.url`, which is
- * bundled into `dist/.prerender/chunks/` before it runs.
- */
+/** Where the emitted atlas lives. */
 export function resolveAtlasDir(): string {
-  const override = process.env.NANOHYPE_ATLAS_DIR;
-  if (override) return override;
-  return resolve(process.cwd(), "../.github/profile/assets/atlas");
+  return siblingDir("NANOHYPE_ATLAS_DIR", ".github", "profile", "assets", "atlas");
 }
 
 export function atlasFailure(dir: string, detail: string): Error {

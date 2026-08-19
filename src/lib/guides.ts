@@ -14,10 +14,12 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import type { Loader } from "astro/loaders";
 // `astro/zod`, not `astro:content` — see the note in src/lib/contracts.ts.
 import { z } from "astro/zod";
+import { siblingDir } from "./checkouts.ts";
+import { rewriteMarkdownLinks } from "./markdown-links.ts";
 
 interface GuideSource {
   /** Route slug under /building/. */
@@ -117,9 +119,7 @@ const GUIDES: GuideSource[] = [
 const ROUTE_BY_FILE = new Map(GUIDES.map((guide) => [guide.file, `/building/${guide.slug}/`]));
 
 function rootDir(): string {
-  const override = process.env.NANOHYPE_CATALOG_DIR;
-  if (override) return override;
-  return resolve(process.cwd(), "../nanohype");
+  return siblingDir("NANOHYPE_CATALOG_DIR", "nanohype");
 }
 
 /**
@@ -161,9 +161,9 @@ export function rewriteGuideLinks(markdown: string, file: string): string {
   const base = "https://github.com/nanohype/nanohype";
   const fromDir = resolveRepoPath("docs", file).split("/").slice(0, -1).join("/");
 
-  return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {
-    if (/^(https?:|mailto:|#)/.test(target)) return whole;
-    if (target.startsWith("/")) return whole;
+  return rewriteMarkdownLinks(markdown, (target) => {
+    if (/^(https?:|mailto:|#)/.test(target)) return undefined;
+    if (target.startsWith("/")) return undefined;
 
     const [path, hash = ""] = target.split("#");
     const anchor = hash ? `#${hash}` : "";
@@ -175,7 +175,7 @@ export function rewriteGuideLinks(markdown: string, file: string): string {
     // written as `../catalog.md` from spec/ and one written as `catalog.md`
     // from docs/ both land on the same page.
     const internal = ROUTE_BY_FILE.get(repoPath.replace(/^docs\//, ""));
-    if (internal) return `](${internal}${anchor}${title})`;
+    if (internal) return `${internal}${anchor}`;
 
     // A target that collapsed to nothing — `..` from docs/, say — has no path
     // to serve under blob or tree, and emitting one anyway produces exactly the
@@ -186,10 +186,10 @@ export function rewriteGuideLinks(markdown: string, file: string): string {
     // trailing slash after joining: `..` leaves "" and `../` leaves "/". Only
     // testing the first left the second emitting `/tree/main//`, which is the
     // same dead link wearing a slash.
-    if (!repoPath.replace(/\/+$/, "")) return `](${base}${anchor}${title})`;
+    if (!repoPath.replace(/\/+$/, "")) return `${base}${anchor}`;
 
     const kind = repoPath.endsWith("/") ? "tree" : "blob";
-    return `](${base}/${kind}/main/${repoPath}${anchor}${title})`;
+    return `${base}/${kind}/main/${repoPath}${anchor}`;
   });
 }
 
