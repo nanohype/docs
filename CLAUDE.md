@@ -21,6 +21,8 @@ pnpm build
 pnpm lint
 pnpm check
 pnpm test
+pnpm format
+pnpm preview
 ```
 
 ## Conventions

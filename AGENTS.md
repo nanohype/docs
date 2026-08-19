@@ -32,6 +32,8 @@ pnpm install
 pnpm lint            # biome check .
 pnpm check           # astro check
 pnpm test            # vitest, unit tier over src/lib/
+pnpm format          # biome check --write . — what to run when lint fails
+pnpm preview         # serve the built dist/
 pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```
