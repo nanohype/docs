@@ -4,8 +4,14 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 
 ## What this is
 
-- Content site at docs.nanohype.dev — not a product service
-- No application runtime, no eval suite, no coverage floor requirement
+- Content site at docs.nanohype.dev — not a product service. No application
+  runtime, no eval suite, no coverage floor requirement
+- There *is* a unit tier: vitest over the pure functions in `src/lib/` (the two
+  link rewriters, the path resolver, the HTML-text helpers, the catalog
+  collection helpers). It runs first in CI, before any checkout, because it
+  needs neither. It is deliberately narrow — anything that reads the catalog,
+  the atlas or `dist/` belongs to the postbuild gates, which run against the
+  real thing rather than a fixture of it
 - Biome is the lint/format gate; `astro check` is the type gate; CI also runs
   osv-scanner and a production build
 - `postbuild` runs two assertions over `dist/`, so they cover the generated
@@ -25,6 +31,7 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 pnpm install
 pnpm lint            # biome check .
 pnpm check           # astro check
+pnpm test            # vitest, unit tier over src/lib/
 pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```

@@ -23,6 +23,7 @@ pnpm dev             # Astro dev server
 pnpm build           # prebuild error pages + astro build + postbuild check
 pnpm lint            # biome check (lint + format)
 pnpm check           # astro check
+pnpm test            # vitest over the pure functions in src/lib/
 ```
 
 ## Layout
