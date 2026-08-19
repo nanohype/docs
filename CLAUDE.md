@@ -10,7 +10,7 @@ See `AGENTS.md` for the agent-facing entry point (commands, content rules, infra
 - Node 24+, pnpm, Astro 7, Starlight, `@shuttering/starlight` (void + beam)
 - `@nanohype/error-pages` renders the 500 page from `@nanohype/tokens`;
   `prebuild` emits it, `postbuild` checks the published file
-- Biome for lint/format; `astro check` for types
+- Biome for lint/format; `astro check` for types; vitest for the unit tier
 - Infra: Terragrunt leaf → shared landing-zone site module (S3 + CloudFront)
 
 ## Scripts
@@ -20,6 +20,7 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm check
+pnpm test
 ```
 
 ## Conventions

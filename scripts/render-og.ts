@@ -15,6 +15,10 @@
  * check hashes the SVG rather than re-rendering it: hashing needs no fonts, so
  * it means the same thing on a runner as it does here. Editing og.svg without
  * re-rendering fails the build.
+ *
+ * The stamp sits beside the SVG it hashes rather than beside the render it
+ * guards. public/ is served verbatim, so a stamp kept there is an internal
+ * build artifact published at a public URL.
  */
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
@@ -22,7 +26,7 @@ import sharp from "sharp";
 
 const SOURCE = "src/assets/og.svg";
 const TARGET = "public/og.png";
-const STAMP = "public/og.png.sha256";
+const STAMP = "src/assets/og.svg.sha256";
 const WIDTH = 1200;
 const HEIGHT = 630;
 

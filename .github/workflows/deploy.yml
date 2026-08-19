@@ -22,6 +22,13 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # The same ceiling ci.yml carries, for the same reason and then one more.
+    # This job reaches the network in four places — eight raw-file fetches, the
+    # link gate's calls to the GitHub API, an S3 sync and a CloudFront
+    # invalidation — and none of them bounds the job on its own. Without this a
+    # stalled connection rides GitHub's 6-hour default, holding a runner while
+    # the site silently goes un-updated.
+    timeout-minutes: 20
     # Two conditions. The role check skips forks and mirrors, where no deploy
     # role is configured — the ARN comes from the docs.nanohype.dev site
     # component in infra/iac, set as a repository variable. The conclusion check
@@ -64,11 +71,16 @@ jobs:
       # The /repos/ pages render each repo's AGENTS.md, which the SDK resolves
       # from checkouts beside the catalog. `.org/` reproduces that layout with
       # only the one file each; `curl -f` fails the deploy on a missing one.
+      #
+      # `--max-time` because curl bounds only the connect phase by default: a
+      # connection that opens and then stalls mid-transfer never returns. Eight
+      # of these run in series, and thirty seconds is far above a file of this
+      # size, so the bound only fires on a transfer that has actually died.
       - name: Fetch the agent contracts
         run: |
           for r in landing-zone eks-gitops eks-agent-platform kx cloudgov fab portal eks-fleet; do
             mkdir -p ".org/$r"
-            curl -fsSL -o ".org/$r/AGENTS.md" \
+            curl -fsSL --max-time 30 -o ".org/$r/AGENTS.md" \
               "https://raw.githubusercontent.com/nanohype/$r/main/AGENTS.md"
           done
 
