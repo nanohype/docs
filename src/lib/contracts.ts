@@ -12,7 +12,6 @@
  * copy of an agent's instructions is worse than no copy.
  */
 
-import { resolve } from "node:path";
 import { KNOWN_CONTRACT_REPOS, LocalSource, loadContract } from "@nanohype/sdk";
 import type { Loader } from "astro/loaders";
 // `astro/zod` rather than `astro:content`. Both hand back the same `z` — the
@@ -21,6 +20,8 @@ import type { Loader } from "astro/loaders";
 // a script) fails on the specifier before reaching the code. `z` is used here
 // only by the exported schema below; the link rewriter never touches it.
 import { z } from "astro/zod";
+import { siblingDir } from "./checkouts.ts";
+import { rewriteMarkdownLinks } from "./markdown-links.ts";
 
 /**
  * What each repo is for, and the boundary it owns.
@@ -70,9 +71,7 @@ const ROLES: Record<string, { role: string; owns: string }> = {
 };
 
 function rootDir(): string {
-  const override = process.env.NANOHYPE_CATALOG_DIR;
-  if (override) return override;
-  return resolve(process.cwd(), "../nanohype");
+  return siblingDir("NANOHYPE_CATALOG_DIR", "nanohype");
 }
 
 /**
@@ -99,8 +98,8 @@ function rootDir(): string {
  * exactly as written, so it reads as what it is.
  */
 export function rewriteLinks(markdown: string, repo: string): string {
-  return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {
-    if (/^(https?:|mailto:|#|\/)/.test(target)) return whole;
+  return rewriteMarkdownLinks(markdown, (target) => {
+    if (/^(https?:|mailto:|#|\/)/.test(target)) return undefined;
 
     const trailing = target.endsWith("/") ? "/" : "";
     const segments: string[] = [];
@@ -119,7 +118,7 @@ export function rewriteLinks(markdown: string, repo: string): string {
       const sibling = segments.shift();
       // Climbing past the org root, or naming nothing after it, is a link that
       // could not resolve anywhere. Left alone so it reads as what it is.
-      if (climbed > 1 || !sibling) return whole;
+      if (climbed > 1 || !sibling) return undefined;
       // The same rule, one case further on: climbing out only means a sibling
       // repo when the next segment actually names one. An author reaching up
       // for a file instead — `../README.md` — has `README.md` shifted off as
@@ -131,14 +130,14 @@ export function rewriteLinks(markdown: string, repo: string): string {
       // site publishes, so that is what it is checked against. The cast widens
       // a literal-union type that would otherwise reject the arbitrary string
       // being asked about — which is the whole question here.
-      if (!(KNOWN_CONTRACT_REPOS as readonly string[]).includes(sibling)) return whole;
+      if (!(KNOWN_CONTRACT_REPOS as readonly string[]).includes(sibling)) return undefined;
       owner = sibling;
     }
 
     const path = segments.join("/");
-    if (!path) return `](https://github.com/nanohype/${owner}${title})`;
+    if (!path) return `https://github.com/nanohype/${owner}`;
     const kind = trailing ? "tree" : "blob";
-    return `](https://github.com/nanohype/${owner}/${kind}/main/${path}${trailing}${title})`;
+    return `https://github.com/nanohype/${owner}/${kind}/main/${path}${trailing}`;
   });
 }
 

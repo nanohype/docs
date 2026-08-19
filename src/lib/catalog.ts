@@ -14,7 +14,6 @@
  * would be a site that silently ships an empty catalog. Everything below exists
  * to convert that quiet emptiness into a loud build failure.
  */
-import { resolve } from "node:path";
 import {
   type Catalog,
   type CatalogComposite,
@@ -28,6 +27,7 @@ import {
   type Standards,
   type TemplateManifest,
 } from "@nanohype/sdk";
+import { siblingDir } from "./checkouts.ts";
 
 /** A template's catalog entry joined to its manifest and its rendered output shape. */
 export interface TemplateDetail {
@@ -51,18 +51,9 @@ export interface CatalogData {
   rootDir: string;
 }
 
-/**
- * Where the catalog lives. Every org repo is a sibling checkout, so the default
- * is `../nanohype`; CI overrides it to wherever it checked the catalog out.
- *
- * Resolved against the project root rather than `import.meta.url`: this module
- * is bundled into `dist/.prerender/chunks/` before it runs, so a URL-relative
- * path resolves against the chunk and silently lands inside the docs repo.
- */
+/** Where the catalog lives. */
 function resolveRootDir(): string {
-  const override = process.env.NANOHYPE_CATALOG_DIR;
-  if (override) return override;
-  return resolve(process.cwd(), "../nanohype");
+  return siblingDir("NANOHYPE_CATALOG_DIR", "nanohype");
 }
 
 function fail(rootDir: string, detail: string): never {

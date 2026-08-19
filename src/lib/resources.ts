@@ -18,8 +18,9 @@
  * the resources are.
  */
 import { readdir, readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { parse } from "yaml";
+import { siblingDir } from "./checkouts.ts";
 
 /** One property of a resource's schema, flattened for rendering. */
 export interface SchemaField {
@@ -85,14 +86,8 @@ const SOURCES: DefinitionSource[] = [
   { repo: "eks-fleet", repoPath: "apis", env: "NANOHYPE_XRDS_DIR" },
 ];
 
-/**
- * Resolved against the project root rather than `import.meta.url`, which is
- * bundled into `dist/.prerender/chunks/` before it runs.
- */
 function resolveDir(source: DefinitionSource): string {
-  const override = process.env[source.env];
-  if (override) return override;
-  return resolve(process.cwd(), "..", source.repo, source.repoPath);
+  return siblingDir(source.env, source.repo, source.repoPath);
 }
 
 function fail(source: DefinitionSource, dir: string, detail: string): never {
