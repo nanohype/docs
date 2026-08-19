@@ -25,7 +25,10 @@ export default defineConfig({
         Hero: "./src/components/Hero.astro",
         // Icon theme toggle + view transitions (with the TOC scroll-spy fix).
         ThemeSelect: "@shuttering/starlight/ThemeSelect.astro",
-        Head: "@shuttering/starlight/Head.astro",
+        // Wraps the shuttering Head and adds the tags Starlight does not emit —
+        // og:image, the Twitter card's title/description/image, robots, and the
+        // llms.txt alternate. See src/components/Head.astro.
+        Head: "./src/components/Head.astro",
       },
       social: [{ icon: "github", label: "GitHub", href: "https://github.com/nanohype" }],
       editLink: { baseUrl: "https://github.com/nanohype/docs/edit/main/" },

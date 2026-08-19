@@ -29,6 +29,27 @@ pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```
 
+## SEO / agent surface
+
+- `seo-baseline`'s required files are emitted, not committed: `/robots.txt` and
+  `/llms.txt` are routes under `src/pages/`, and `sitemap-index.xml` comes from
+  `@astrojs/sitemap`. `llms.txt` is generated from the same collections the
+  pages render, so a page added upstream appears in it on the next build
+- `/og.png` is the exception: rendered from `src/assets/og.svg` by
+  `node scripts/render-og.ts` and **committed**. Rasterising text needs fonts a
+  CI runner does not have, so a build-time render would differ from this one
+  silently. Regenerate and commit after editing the SVG
+- `src/components/Head.astro` adds what Starlight does not emit — `og:image`,
+  the Twitter card's title/description/image, `robots`, and the `llms.txt`
+  alternate link. Title and description are read back out of the head Starlight
+  already built so the Twitter tags cannot drift from the Open Graph ones
+- **Knowingly unmet:** `seo-baseline`'s `shared-implementation` rule (severity
+  `warn`) asks for the head tags and generators to come from a shared package.
+  No such package exists in the org — `nanohype/` ships `error-pages`, `sdk`,
+  `cli`, `mcp-server`, `library` and `tokens`, and no SEO layer. This repo
+  hand-rolls them until one exists. Do not "fix" it by inventing a private copy;
+  the fix is a shared package, which is a catalog decision
+
 ## Content rules
 
 - Describe the design state, never migration history (greenfield doctrine)

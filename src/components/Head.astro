@@ -1,0 +1,67 @@
+---
+/**
+ * The site's head, wrapping the shuttering theme's.
+ *
+ * @shuttering/starlight's Head renders Starlight's own tags and adds the
+ * ClientRouter for view transitions; it is included here rather than replaced,
+ * so this file owns only what Starlight does not emit.
+ *
+ * What Starlight does not emit, and the seo-baseline standard requires: an
+ * og:image, the Twitter card's title/description/image, and a robots directive.
+ * Starlight emits `twitter:card=summary_large_image` on its own, which without
+ * an image is a large-image card declaring an image it never names — the share
+ * preview falls back to a bare link.
+ *
+ * Title and description are read back out of the head Starlight already built
+ * rather than re-derived from the route. Deriving them again would mean
+ * repeating the frontmatter-then-site-default fallback, and the two copies
+ * would agree until a page set one and not the other. The Twitter tags mirror
+ * the Open Graph ones by construction.
+ */
+import ShutteringHead from "@shuttering/starlight/Head.astro";
+
+const { head } = Astro.locals.starlightRoute;
+
+/** The content of a meta tag Starlight already emitted, by property or name. */
+function metaContent(key: string): string | undefined {
+  const tag = head.find(
+    (entry) => entry.tag === "meta" && (entry.attrs?.property === key || entry.attrs?.name === key),
+  );
+  const content = tag?.attrs?.content;
+  return typeof content === "string" ? content : undefined;
+}
+
+const title = metaContent("og:title");
+const description = metaContent("og:description");
+
+// Only when the page has not already said something. These tags are appended
+// after Starlight's rather than merged into them, so an unconditional robots
+// directive does not override a page's own — it sits beside it. 404 and 500
+// both set `noindex`, and a second tag saying `index` on the same page is a 404
+// asking to be indexed.
+const hasRobots = head.some((entry) => entry.tag === "meta" && entry.attrs?.name === "robots");
+
+// Absolute, because a share crawler does not resolve relative URLs. `site` is
+// set in astro.config.mjs and is the same origin the canonical tag uses.
+const image = new URL("/og.png", Astro.site).href;
+---
+
+<ShutteringHead />
+
+<meta property="og:image" content={image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="nanohype — the k8s-native software factory" />
+
+{title && <meta name="twitter:title" content={title} />}
+{description && <meta name="twitter:description" content={description} />}
+<meta name="twitter:image" content={image} />
+
+{!hasRobots && <meta name="robots" content="index,follow" />}
+
+{/*
+  The machine-readable summary of this site, in the format an agent looks for.
+  Advertised here as well as served at /llms.txt so it is discoverable from any
+  page rather than only by guessing the well-known path.
+*/}
+<link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt" />
