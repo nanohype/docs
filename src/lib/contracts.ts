@@ -89,7 +89,14 @@ function rootDir(): string {
  * `eks-gitops` writes `../kx/AGENTS.md` to reach kx. Rewriting that against its
  * own repo produces a path with `..` in it, which GitHub resolves to nothing.
  * The first segment after climbing out is the repo name, so the link is
- * repointed at that repo instead.
+ * repointed at that repo instead — but only when that segment actually names a
+ * repo whose contract this site publishes. `../README.md` is an author reaching
+ * up for a file, not for a sibling, and taking `README.md` as a repo name
+ * points the link at one that does not exist.
+ *
+ * Anything that cannot be resolved — climbing past the org root, naming nothing
+ * after the climb, or naming something that is not a known repo — is returned
+ * exactly as written, so it reads as what it is.
  */
 export function rewriteLinks(markdown: string, repo: string): string {
   return markdown.replace(/\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (whole, target: string, title = "") => {

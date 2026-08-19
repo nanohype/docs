@@ -28,7 +28,7 @@
  * separator and fusing whatever sat either side.
  */
 export const INLINE = /<\/?(?:span|a|code|em|strong|b|i|mark|sup|sub)\b[^>]*>/gi;
-export const TAG = /<[^>]+>/g;
+const TAG = /<[^>]+>/g;
 
 /**
  * Applies a pattern until the string stops changing.

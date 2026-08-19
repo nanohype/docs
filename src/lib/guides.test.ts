@@ -92,8 +92,18 @@ describe("rewriteGuideLinks", () => {
      * tree. Emitting one anyway produced `/blob/main/`, which is the 404 the
      * segment-dropping in resolveRepoPath exists to avoid.
      */
-    it("gives the repo root when the target collapses to nothing", () => {
-      expect(rewriteGuideLinks("[up](..)", "catalog.md")).toBe(`[up](${REPO})`);
+    /**
+     * Collapsing has two spellings, because resolveRepoPath re-appends the
+     * trailing slash after joining: `..` leaves "" and `../` leaves "/".
+     * Testing only the first left the second emitting `/tree/main//` — the same
+     * dead link wearing a slash.
+     */
+    it.each([
+      ["no trailing slash", "[up](..)"],
+      ["a trailing slash", "[up](../)"],
+      ["several levels with a trailing slash", "[up](../../)"],
+    ])("gives the repo root when the target collapses to nothing — %s", (_kind, markdown) => {
+      expect(rewriteGuideLinks(markdown, "catalog.md")).toBe(`[up](${REPO})`);
     });
   });
 });
