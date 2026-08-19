@@ -19,6 +19,7 @@
  * the Open Graph ones by construction.
  */
 import ShutteringHead from "@shuttering/starlight/Head.astro";
+import { structuredData } from "../lib/structured-data.ts";
 
 const { head } = Astro.locals.starlightRoute;
 
@@ -44,6 +45,18 @@ const hasRobots = head.some((entry) => entry.tag === "meta" && entry.attrs?.name
 // Absolute, because a share crawler does not resolve relative URLs. `site` is
 // set in astro.config.mjs and is the same origin the canonical tag uses.
 const image = new URL("/og.png", Astro.site).href;
+
+// Derived from the tags above rather than from the route, so the graph and the
+// Open Graph description of a page cannot disagree. Absent when the head did
+// not carry what it is built from — see src/lib/structured-data.ts.
+const graph = structuredData({
+  siteName: metaContent("og:site_name"),
+  title,
+  description,
+  url: metaContent("og:url"),
+  origin: new URL("/", Astro.site).href,
+  image,
+});
 ---
 
 <ShutteringHead />
@@ -65,3 +78,10 @@ const image = new URL("/og.png", Astro.site).href;
   page rather than only by guessing the well-known path.
 */}
 <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt" />
+
+{/*
+  A data block, not a script: the type is non-executable, and the JSON is
+  serialised rather than interpolated so a title containing a quote cannot
+  break out of it.
+*/}
+{graph && <script type="application/ld+json" set:html={JSON.stringify(graph)} />}
