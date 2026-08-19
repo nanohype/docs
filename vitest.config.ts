@@ -18,7 +18,10 @@ import { defineConfig } from "vitest/config";
  */
 export default defineConfig({
   test: {
-    include: ["src/**/*.test.ts"],
+    // `scripts/` too, for the assertions that are about the repo rather than
+    // about a function — they belong beside check-links.ts and
+    // check-vocabulary.ts, which is where a reader looks for that.
+    include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
     environment: "node",
   },
 });

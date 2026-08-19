@@ -24,6 +24,8 @@ pnpm build           # prebuild error pages + astro build + postbuild check
 pnpm lint            # biome check (lint + format)
 pnpm check           # astro check
 pnpm test            # vitest over the pure functions in src/lib/
+pnpm format          # biome check --write . — the writing half of lint
+pnpm preview         # serve the built dist/ locally
 ```
 
 ## Layout
