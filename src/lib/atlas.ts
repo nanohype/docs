@@ -101,6 +101,47 @@ function readDimensions(svg: string): { width: number; height: number } | undefi
   return undefined;
 }
 
+/**
+ * What is wrong with one manifest entry, or nothing if it is whole.
+ *
+ * `atlas.json` is emitted by nanohype/.github and read here from a checkout CI
+ * takes at that repo's default branch, so its shape is a contract this repo
+ * consumes and does not control, at whatever version the producer last pushed.
+ *
+ * Every field the site consumes is checked, because a field that reaches a page
+ * unchecked reaches it as `undefined` — and `name` and `blurb` are rendered as
+ * prose, where neither postbuild gate looks. `svg` and `id` already fail loudly
+ * elsewhere: a diagram that is not in the directory, and a perspective with no
+ * reading note. Those two are the reason to check the rest rather than a reason
+ * not to.
+ *
+ * Hand-written rather than a schema library: the shape is five fields and fixed,
+ * and this module is imported by scripts/sync-atlas.ts, which runs under plain
+ * `node` during prebuild, before Astro exists in the process.
+ */
+export function entryFaults(entry: unknown): string[] {
+  // Arrays are objects, and one reaching here would otherwise be reported as an
+  // entry missing all five fields rather than as the wrong shape entirely.
+  if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+    return ["is not an object"];
+  }
+  const record = entry as Record<string, unknown>;
+
+  const faults = ["id", "name", "blurb", "svg"].flatMap((field) =>
+    typeof record[field] === "string" && record[field] !== ""
+      ? []
+      : [`${field} is ${record[field] === undefined ? "missing" : "not a non-empty string"}`],
+  );
+
+  // Numeric, because the source link pads it to two digits to name the file the
+  // perspective is modelled in.
+  if (typeof record.index !== "number" || !Number.isInteger(record.index)) {
+    faults.push(`index is ${record.index === undefined ? "missing" : "not an integer"}`);
+  }
+
+  return faults;
+}
+
 /** Reads and validates the emitted manifest. Shared by the sync script and the pages. */
 export async function readAtlasManifest(dir: string): Promise<AtlasDiagram[]> {
   const manifestPath = join(dir, "atlas.json");
@@ -108,16 +149,31 @@ export async function readAtlasManifest(dir: string): Promise<AtlasDiagram[]> {
     throw atlasFailure(dir, "atlas.json is not there. Run `pnpm emit` in the atlas project.");
   }
 
-  let entries: AtlasEntry[];
+  let parsed: unknown;
   try {
-    entries = JSON.parse(await readFile(manifestPath, "utf8"));
+    parsed = JSON.parse(await readFile(manifestPath, "utf8"));
   } catch (cause) {
     throw atlasFailure(dir, `atlas.json did not parse: ${(cause as Error).message}`);
   }
 
-  if (!Array.isArray(entries) || entries.length === 0) {
+  if (!Array.isArray(parsed) || parsed.length === 0) {
     throw atlasFailure(dir, "atlas.json parsed but lists no perspectives.");
   }
+
+  const malformed = parsed.flatMap((entry, position) => {
+    const faults = entryFaults(entry);
+    return faults.length === 0 ? [] : [`entry ${position}: ${faults.join(", ")}`];
+  });
+  if (malformed.length > 0) {
+    throw atlasFailure(
+      dir,
+      [
+        `atlas.json describes ${malformed.length} perspective(s) this site cannot render:`,
+        ...malformed.map((fault) => `  ${fault}`),
+      ].join("\n"),
+    );
+  }
+  const entries = parsed as AtlasEntry[];
 
   // The manifest is emitted in the same pass that writes the SVGs, so a missing
   // file means the directory was assembled by something other than that emit.
