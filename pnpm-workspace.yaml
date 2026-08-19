@@ -1,31 +1,53 @@
+# pnpm settings live here, not in package.json.
+#
+# pnpm 11 stopped reading the `pnpm` field in package.json entirely, and it does
+# so without failing — it prints "The following keys were ignored" and installs
+# anyway. Settings left behind in package.json therefore stop applying the
+# moment the package manager is bumped, silently. pnpm 10 already reads this
+# file, so they live in one place across both.
+#
+# There is no `overrides:` block, and that is a result rather than an omission.
+# Every advisory floor this tree carried has been overtaken by the package that
+# depends on it: astro declares js-yaml ^4.3.0, ajv declares fast-uri ^3.0.1,
+# vite declares postcss ^8.5.17, postcss declares nanoid ^3.3.17 — and each of
+# those ranges now reaches a version the advisory is fixed in. Verified by
+# resolving with the whole block deleted and running osv-scanner 2.3.8, the
+# version CI pins, over the result: no issues found.
+#
+# Before adding one back, two rules, both learned in this file:
+#
+#   A floor is bounded by what its PARENT declares. The right value is the
+#   lowest one clearing the advisory inside the parent's range — never the
+#   newest release. A value past that range resolves a dependency the parent
+#   never agreed to, and it will appear to work for exactly as long as some
+#   interop happens to cover for it. This tree shipped that twice: nanoid
+#   pinned to ^6.0.0 under a parent declaring ^3.3.17, loading only through
+#   Node's require(esm) fallback, and fast-uri floored at >=4.1.2 under a
+#   parent declaring ^3.0.1.
+#
+#   A floor that changes nothing must be deleted, not carried. Renovate reads
+#   these as ordinary dependency pins and proposes majors for them — that is
+#   how the nanoid entry reached 6 — so an entry with no work left to do is
+#   just a surface for that to happen on.
+#
+# Both are answered the same way: resolve without the entry, and see what the
+# parent gives you on its own.
+
+# pnpm 11 holds a package for 24h after publish before it will install it. The
+# floor is there so this tree is never the first consumer of a compromised
+# publish — a hijacked package is usually caught and unpublished within hours,
+# and waiting costs nothing on a dependency nobody is blocked on.
+#
+# Neither half of that applies to @shuttering. It is first-party: published from
+# a repo under the same ownership as this one, deliberately, and announced. There
+# is no third party to be compromised by, so the floor buys nothing here and only
+# delays a bump for three days.
+#
+# Scoped to @shuttering on purpose. @nanohype/* is published to the public
+# registry and consumed by people outside this org, so it keeps the floor and is
+# held to the same bar as any other public dependency.
 minimumReleaseAgeExclude:
   - '@shuttering/*'
-
-overrides:
-  # Clears the osv-scanner gate on the resolved tree; postcss arrives via astro.
-  postcss: ">=8.5.18"
-
-  # GHSA-2v37-7h3g-55p8 (CVSS 8.2) — a custom generator loops indefinitely when
-  # size is zero. Reached through postcss.
-  #
-  # The caret is load-bearing and must not be relaxed to `>=`: the open-ended
-  # form resolves to nanoid 6, which is ESM-only and is not the API postcss
-  # calls. The caret keeps the fix inside the 3.x line the parent supports.
-  nanoid: "^6.0.0"
-
-  # GHSA-7p8r-x3mc-p8w7 (HIGH) — host confusion; a URL whose authority is
-  # introduced with a backslash parses to a different host than a resolver
-  # reaches. The advisory patches 4.x at 4.1.2 and 3.x at 3.1.5 separately;
-  # this tree resolves 4.x, so 4.1.2 is the correct floor here.
-  fast-uri: ">=4.1.2"
-
-  # GHSA-5p4m-2wfm-xmqj / CVE-2026-59870 in js-yaml 3.x and 4.x below 4.3.1.
-  #
-  # Scoped to the 4.x line deliberately. astro 7 and Starlight pull js-yaml 5.x,
-  # which the advisory does not cover: an unscoped `^4.3.1` drags the site's own
-  # frontmatter parser down a major version, and an unbounded `>=4.3.1` collapses
-  # both lines to 5.x. The scoped form moves only the vulnerable resolution.
-  js-yaml@4: "^4.3.1"
 
 # pnpm 11 turns an ignored build script into an install error where pnpm 10 only
 # warned, and it renamed the setting: the pnpm 10 spellings
