@@ -37,6 +37,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadCatalogData } from "../src/lib/catalog.ts";
+import { textOf } from "../src/lib/html-text.ts";
 import { listPlatformResources } from "../src/lib/resources.ts";
 
 const DIST = "dist";
@@ -104,48 +105,6 @@ async function labelNamespaces(): Promise<Set<string>> {
       .filter((prefix): prefix is string => typeof prefix === "string")
       .map((prefix) => prefix.replace(/\/$/, "")),
   );
-}
-
-/**
- * Recovers the text a reader sees. Inline markup is removed with nothing in its
- * place, because a highlighted code block is one string cut into spans and any
- * separator would corrupt it; everything else becomes a newline so that prose
- * from adjacent blocks cannot run together into a token that was never written.
- */
-const INLINE = /<\/?(?:span|a|code|em|strong|b|i|mark|sup|sub)\b[^>]*>/gi;
-const TAG = /<[^>]+>/g;
-
-/**
- * Applies a pattern until the string stops changing.
- *
- * One pass is not enough: removing a match can splice its neighbours into a new
- * match that the same pass already stepped over. `<<span>span>` reduces to
- * `<span>` and would survive, taking whatever it wrapped out of the scan with
- * it. Repeating to a fixed point is what makes "the tags are gone" true rather
- * than usually true, and every pattern here only ever shortens the string, so
- * it terminates.
- */
-function stripToFixedPoint(input: string, pattern: RegExp, replacement: string): string {
-  let current = input;
-  for (;;) {
-    const next = current.replace(pattern, replacement);
-    if (next === current) return current;
-    current = next;
-  }
-}
-
-function textOf(html: string): string {
-  const withoutScripts = stripToFixedPoint(html, /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "\n");
-  const withoutInline = stripToFixedPoint(withoutScripts, INLINE, "");
-  return stripToFixedPoint(withoutInline, TAG, "\n")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)))
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&");
 }
 
 async function* htmlFiles(dir: string): AsyncGenerator<string> {
