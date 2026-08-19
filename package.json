@@ -14,6 +14,7 @@
     "postbuild": "nanohype-error-pages check dist/500.html --status 500 && node scripts/check-vocabulary.ts && node scripts/check-links.ts",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "vitest run",
     "lint": "biome check .",
     "format": "biome check --write ."
   },
@@ -29,6 +30,7 @@
     "@astrojs/check": "^0.9.9",
     "@biomejs/biome": "2.5.7",
     "@nanohype/error-pages": "^0.1.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
   }
 }
