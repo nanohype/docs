@@ -30,7 +30,20 @@ const sourceUrl =
   <p class="blurb">{perspective.blurb}</p>
 
   <figure>
-    <img src={`/atlas/${perspective.svg}`} alt={`${perspective.name} — ${perspective.blurb}`} />
+    {/*
+      width and height are the diagram's own, read from its root element by
+      src/lib/atlas.ts. They are what lets the browser reserve the right box
+      before 135-149 KB of SVG arrives — without them this figure is zero-high
+      until it lands, and the notes and pager below jump down the moment it
+      does. The CSS below still governs the rendered size; these only supply
+      the ratio.
+    */}
+    <img
+      src={`/atlas/${perspective.svg}`}
+      width={perspective.width}
+      height={perspective.height}
+      alt={`${perspective.name} — ${perspective.blurb}`}
+    />
   </figure>
 
   {perspective.notes.map((note) => <p>{note}</p>)}
@@ -69,15 +82,21 @@ const sourceUrl =
     font-size: var(--sl-text-lg);
     color: var(--sl-color-gray-2);
   }
-  /* The diagrams are authored on a light ground and carry their own white
-     background, so they sit on a plate of their own rather than inheriting the
-     page theme — which is also how they read on GitHub. */
+  /* The diagrams are authored on a light ground — every one opens with a
+     full-bleed `#f4f2ee` rect — so they sit on a plate of their own rather than
+     inheriting the page theme, which is also how they read on GitHub.
+
+     The plate matches that fill exactly, and has to. Reserving the box means
+     the figure now paints at full size for the whole download of a 135-149 KB
+     diagram; any other colour is a flash on the largest element of the page,
+     held for the length of the load and then repainted. Before the box was
+     reserved this was invisible, because a zero-height figure never painted. */
   figure {
     margin: 1.5rem 0;
     border: 1px solid var(--sl-color-gray-5);
     border-radius: 0.5rem;
     overflow: hidden;
-    background: #ffffff;
+    background: #f4f2ee;
     line-height: 0;
   }
   figure img {
