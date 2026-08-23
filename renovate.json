@@ -5,7 +5,10 @@
     "`pnpm check` runs `astro check`, which drives @astrojs/language-server, which reads TypeScript through its programmatic compiler API. TypeScript 7 is the native port and does not expose that API — the check exits 1 with 'The TypeScript module loaded does not expose the programmatic API that astro check relies on'. So a 7.x bump here does not fail a type error, it removes the type gate entirely. Tracked upstream at https://github.com/withastro/roadmap/discussions/1321 ('TypeScript Native (tsgo / TypeScript 7) compatibility tracking') — a discussion, not an issue, so the full URL is written out rather than shorthand that resolves to a 404. When the language server supports the native compiler, drop this rule.",
     "The rest of the estate already splits on exactly this line: incident-response, portal/web and every eks-agent-platform package sit on ^6.0.3 because typedoc and openapi-typescript read TypeScript programmatically too, while nanohype's own packages, which do not, are on ^7.0.0. This repo belongs on the 6.x side and the package.json caret says so; this rule is what stops a major PR from moving it anyway.",
     "The caret alone was not enough once. A 7.x major PR merged green because CI ran no typecheck at all, so nothing could contradict it — the gate and the hold are one fix, not two, and removing either brings the failure back.",
-    "ORDERING: the preset's own notes warn that a consumer's packageRules are appended after its and later rules win. That is the mechanism relied on here. This rule deliberately sets nothing but allowedVersions — no automerge, no minimumReleaseAge, no schedule — so it cannot reach past its own package and defeat the security posture the preset keeps last."
+    "ORDERING: the preset's own notes warn that a consumer's packageRules are appended after its and later rules win. That is the mechanism relied on here. This rule deliberately sets nothing but allowedVersions — no automerge, no minimumReleaseAge, no schedule — so it cannot reach past its own package and defeat the security posture the preset keeps last.",
+    "DESIGN SYSTEM: @shuttering/starlight is pinned to an exact version in package.json rather than a caret, and the pin is load-bearing. Renovate proposes only versions that fall outside the declared range, so a caret makes every compatible release invisible to it — a published fix is never offered, while the resolved version still moves whenever lockFileMaintenance runs, under a PR title that names no dependency at all. An exact pin is what turns a design-system release into a PR that says which version it is.",
+    "The gate that PR has to pass is `pnpm check:transitions`, which drives headless Chrome over the built site and asserts that every view-transition-name resolves to exactly one element. That is the failure a theme release can ship: a selector matching a second element aborts every page transition on the site, and it passes the type gate, the lint gate, the unit tier and both postbuild gates. A bump green on everything else is exactly the case this repo could not otherwise detect.",
+    "NO hostRules: all three scopes this repo consumes — @shuttering, @nanohype/sdk, @nanohype/error-pages — resolve from npmjs without a token, and there is no .npmrc mapping any scope elsewhere. A credential rule for a registry this repo never contacts would be another repo's configuration living here."
   ],
   "extends": ["github>nanohype/.github"],
   "packageRules": [
@@ -14,6 +17,12 @@
       "matchManagers": ["npm"],
       "matchPackageNames": ["typescript"],
       "allowedVersions": "<7"
+    },
+    {
+      "description": "Give the design system its own PR. The preset extends group:allNonMajor, which would sweep a @shuttering release into a combined dependency PR — where the transition gate's verdict covers a dozen packages at once, and the one package that decides how every page renders is reviewed as routine. Sets groupName and nothing else, per the ORDERING note above.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["/^@shuttering//"],
+      "groupName": "design-system"
     }
   ]
 }
