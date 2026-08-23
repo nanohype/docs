@@ -38,6 +38,30 @@ pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```
 
+## Sibling checkouts
+
+Five sections of this site are generated from other repos: `/catalog/` and the
+guides from the catalog, `/repos/` from each repo's `AGENTS.md`, `/atlas/` from
+the diagrams `nanohype/.github` emits, and `/platform/resources/` from the two
+control planes' API definitions. `src/lib/checkouts.ts` resolves them against
+the parent of the working directory, which is the org's layout — each repo
+beside the others.
+
+A git worktree is not beside its siblings. Its parent is the worktree root,
+which holds no checkouts, so a build there fails on the first generated section
+and reports one missing directory at a time. Name the directory the real
+checkouts sit in and all five resolve from it:
+
+```bash
+NANOHYPE_CHECKOUTS_DIR=~/codes/nanohype pnpm build
+```
+
+The four per-repo variables `ci.yml` sets — `NANOHYPE_CATALOG_DIR`,
+`NANOHYPE_ATLAS_DIR`, `NANOHYPE_CRDS_DIR`, `NANOHYPE_XRDS_DIR` — override that
+base one path at a time, and each wins where it is set. CI needs them because
+its layout is not the org's: it clones what it needs into the workspace, two of
+them sparsely, so no single directory is the parent of all five.
+
 ## SEO / agent surface
 
 - `seo-baseline`'s required files are emitted, not committed: `/robots.txt` and

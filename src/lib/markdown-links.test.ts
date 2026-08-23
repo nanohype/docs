@@ -61,8 +61,10 @@ describe("rewriteMarkdownLinks", () => {
 
 describe("siblingDir", () => {
   const ENV = "NANOHYPE_TEST_DIR_FIXTURE";
+  const BASE = "NANOHYPE_CHECKOUTS_DIR";
   afterEach(() => {
     delete process.env[ENV];
+    delete process.env[BASE];
   });
 
   it("prefers the environment override verbatim", () => {
@@ -83,5 +85,21 @@ describe("siblingDir", () => {
     expect(siblingDir(ENV, "eks-fleet", "apis")).toBe(
       `${process.cwd().replace(/\/[^/]+$/, "")}/eks-fleet/apis`,
     );
+  });
+
+  it("resolves against the base directory when one is named", () => {
+    process.env[BASE] = "/checkouts";
+    expect(siblingDir(ENV, "eks-fleet", "apis")).toBe("/checkouts/eks-fleet/apis");
+  });
+
+  it("lets a per-repo override win over the base directory, which is how CI resolves", () => {
+    process.env[BASE] = "/checkouts";
+    process.env[ENV] = "/workspace/.fleet/apis";
+    expect(siblingDir(ENV, "eks-fleet", "apis")).toBe("/workspace/.fleet/apis");
+  });
+
+  it("ignores an empty base directory, on the same grounds as an empty override", () => {
+    process.env[BASE] = "";
+    expect(siblingDir(ENV, "nanohype")).toBe(`${process.cwd().replace(/\/[^/]+$/, "")}/nanohype`);
   });
 });
