@@ -163,6 +163,12 @@ const chrome = spawn(
     "--disable-gpu",
     "--hide-scrollbars",
     `--user-data-dir=${mkdtempSync(join(tmpdir(), "check-transitions-"))}`,
+    // The renderer sandbox isolates the host from untrusted page content. Every
+    // page here is this repo's own build, served from loopback, so it guards
+    // nothing — and it needs user namespaces a CI runner may withhold, which
+    // stops the browser before it prints an endpoint. Dropped there and kept
+    // everywhere else; it changes nothing this script measures.
+    ...(process.env.CI ? ["--no-sandbox"] : []),
     "about:blank",
   ],
   { stdio: ["ignore", "ignore", "pipe"] },
