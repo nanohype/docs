@@ -24,6 +24,17 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
     every generated section published exactly the pages its source declares.
     Repo paths are checked against one tree listing per repo from the GitHub
     API; unreachable listings warn locally and **fail** under `CI`
+- `scripts/check-transitions.ts` is the third assertion over `dist/`, run by
+  hand as `pnpm check:transitions`. It drives headless Chrome over CDP and reads
+  `getComputedStyle(el).viewTransitionName` on every element of every route, so
+  it measures what the cascade produced rather than what a stylesheet says. A
+  `view-transition-name` claimed twice aborts the whole transition, and nothing
+  else in this repo can see that — a site whose every transition is dead passes
+  the type gate, the lint gate, the unit tier and both postbuild gates. Run it
+  against any `@shuttering/starlight` change, and against a build known to be
+  broken before trusting a green run: a check that has never failed is a claim
+  about the checker. It needs a Chrome on the machine (`CHROME_PATH` overrides
+  the search) and fails rather than skipping when there is none
 
 ## Commands
 
@@ -31,6 +42,7 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 pnpm install
 pnpm lint            # biome check .
 pnpm check           # astro check
+pnpm check:transitions   # view-transition uniqueness over dist/, needs Chrome
 pnpm test            # vitest, unit tier over src/lib/
 pnpm format          # biome check --write . — what to run when lint fails
 pnpm preview         # serve the built dist/
