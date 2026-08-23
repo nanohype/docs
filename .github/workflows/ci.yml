@@ -106,6 +106,23 @@ jobs:
           # read: a check that silently stops checking is the defect it exists
           # to catch.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Transition gate. Drives headless Chrome over the `dist/` this job just
+      # built and reads `getComputedStyle(el).viewTransitionName` on every
+      # element of every route: a name claimed twice aborts the whole page
+      # transition, and no other gate here can see that. A build with every
+      # transition dead passes the type gate, the lint gate, the unit tier and
+      # both postbuild gates.
+      #
+      # A step rather than a setup action: ubuntu-latest ships Chrome, and the
+      # script searches the standard install paths. It fails, naming the paths
+      # it searched, when there is none — a browser this job cannot start is a
+      # gate that stopped checking, which is the defect it exists to catch.
+      #
+      # Outside `postbuild` on purpose. `deploy.yml` runs `pnpm build` too, and
+      # a browser on the critical path of every deploy buys nothing there: what
+      # this catches arrives with a dependency change, which arrives as a PR.
+      - name: transitions (headless Chrome over dist/)
+        run: pnpm check:transitions
       # Type gate. `astro check` typechecks the .astro components and the TS
       # under src/ together, which nothing else here does: `astro build` emits
       # without typechecking, and Biome lints without reading types.

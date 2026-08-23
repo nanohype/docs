@@ -24,6 +24,19 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
     every generated section published exactly the pages its source declares.
     Repo paths are checked against one tree listing per repo from the GitHub
     API; unreachable listings warn locally and **fail** under `CI`
+- `scripts/check-transitions.ts` is the third assertion over `dist/`, run in CI
+  as `pnpm check:transitions`. It drives headless Chrome over CDP and reads
+  `getComputedStyle(el).viewTransitionName` on every element of every route, so
+  it measures what the cascade produced rather than what a stylesheet says. A
+  `view-transition-name` claimed twice aborts the whole transition, and nothing
+  else in this repo can see that — a site whose every transition is dead passes
+  the type gate, the lint gate, the unit tier and both postbuild gates. Run it
+  against any `@shuttering/starlight` change, and against a build known to be
+  broken before trusting a green run: a check that has never failed is a claim
+  about the checker. It needs a Chrome on the machine (`CHROME_PATH` overrides
+  the search) and fails rather than skipping when there is none. It runs as its
+  own CI step rather than in `postbuild`, so `deploy.yml` does not need a
+  browser to ship a page
 
 ## Commands
 
@@ -31,12 +44,37 @@ Public Astro/Starlight site for the nanohype org. Agent entry point for this rep
 pnpm install
 pnpm lint            # biome check .
 pnpm check           # astro check
+pnpm check:transitions   # view-transition uniqueness over dist/, needs Chrome
 pnpm test            # vitest, unit tier over src/lib/
 pnpm format          # biome check --write . — what to run when lint fails
 pnpm preview         # serve the built dist/
 pnpm build           # error pages + astro build + postbuild gates
 pnpm dev
 ```
+
+## Sibling checkouts
+
+Five sections of this site are generated from other repos: `/catalog/` and the
+guides from the catalog, `/repos/` from each repo's `AGENTS.md`, `/atlas/` from
+the diagrams `nanohype/.github` emits, and `/platform/resources/` from the two
+control planes' API definitions. `src/lib/checkouts.ts` resolves them against
+the parent of the working directory, which is the org's layout — each repo
+beside the others.
+
+A git worktree is not beside its siblings. Its parent is the worktree root,
+which holds no checkouts, so a build there fails on the first generated section
+and reports one missing directory at a time. Name the directory the real
+checkouts sit in and all five resolve from it:
+
+```bash
+NANOHYPE_CHECKOUTS_DIR=~/codes/nanohype pnpm build
+```
+
+The four per-repo variables `ci.yml` sets — `NANOHYPE_CATALOG_DIR`,
+`NANOHYPE_ATLAS_DIR`, `NANOHYPE_CRDS_DIR`, `NANOHYPE_XRDS_DIR` — override that
+base one path at a time, and each wins where it is set. CI needs them because
+its layout is not the org's: it clones what it needs into the workspace, two of
+them sparsely, so no single directory is the parent of all five.
 
 ## SEO / agent surface
 

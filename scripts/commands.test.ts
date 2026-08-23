@@ -44,7 +44,7 @@ const CONTRIBUTOR_FACING = ["dev", "build", "lint", "format", "check", "test", "
  * the failure is invisible precisely because everything else about it — the
  * script, the docs, the reviewer's memory — still says it exists.
  */
-const GATES = ["test", "build", "check", "lint"];
+const GATES = ["test", "build", "check", "check:transitions", "lint"];
 
 /** Every file that enumerates commands. All three must agree. */
 const DOCS = ["README.md", "AGENTS.md", "CLAUDE.md"];
