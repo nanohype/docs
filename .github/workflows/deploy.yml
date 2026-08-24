@@ -41,6 +41,26 @@ jobs:
       (github.event_name == 'workflow_dispatch' ||
        github.event.workflow_run.conclusion == 'success')
     steps:
+      # An unset variable must not publish nothing quietly. The job condition
+      # above reads a missing AWS_DEPLOY_ROLE_ARN as a fork and skips, which
+      # GitHub reports as a green run; the two variables below carry no such
+      # condition, and unasserted they surface as an `s3:///` sync or an
+      # invalidation against an empty distribution id, after the whole build
+      # has already run. Deploy configuration is required, so assert it before
+      # the build spends the time.
+      - name: Require deploy configuration
+        env:
+          BUCKET: ${{ vars.DOCS_BUCKET }}
+          DISTRIBUTION_ID: ${{ vars.DOCS_DISTRIBUTION_ID }}
+        run: |
+          missing=()
+          [ -n "$BUCKET" ]          || missing+=(DOCS_BUCKET)
+          [ -n "$DISTRIBUTION_ID" ] || missing+=(DOCS_DISTRIBUTION_ID)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository/org variable(s): ${missing[*]}"
+            exit 1
+          fi
+
       # `workflow_run` checks out the default branch at HEAD, not the commit
       # that triggered the run. On a busy main those differ, and the deploy
       # would ship a commit CI never looked at.
@@ -132,9 +152,16 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
 
+      # Both the origin and the distribution resolve from repository variables.
+      # The bucket name is account-qualified: the terragrunt leaf composes it as
+      # `nanohype-docs-site-${local.account_id}` from TERRAGRUNT_ACCOUNT_ID at
+      # apply time so the account id never lands in a tracked file, and this
+      # repository is public. A literal here republishes exactly what that
+      # indirection exists to withhold, and splits one destination across a
+      # settings page and a workflow edit.
       - name: Sync and invalidate
         env:
-          BUCKET: nanohype-docs-site-767397986924
+          BUCKET: ${{ vars.DOCS_BUCKET }}
           DISTRIBUTION_ID: ${{ vars.DOCS_DISTRIBUTION_ID }}
         run: |
           aws s3 sync dist/ "s3://$BUCKET/" --delete
