@@ -22,6 +22,18 @@ locals {
   # revision is the CI commit (GITHUB_SHA), "local" off-CI.
   owner    = try(local.env_vars.locals.owner, local.cost_center)
   revision = substr(get_env("GITHUB_SHA", "local"), 0, 7)
+
+  # Component and Team complete the required tier of the org resource-tagging
+  # standard (content.required_by_surface.aws). cloudgov raises a MEDIUM finding
+  # per missing required key and exits non-zero at `--fail-on medium`, so a key
+  # absent here is absent from every resource this tree creates.
+  #
+  # Component is derived from the leaf's own directory rather than declared per
+  # leaf, so a leaf added later tags itself without an edit here.
+  # path_relative_to_include() already keys the remote state object below, which
+  # is the same resolution in the same position.
+  component = basename(path_relative_to_include())
+  team      = local.env_vars.locals.team
 }
 
 # --- Common inputs ---
@@ -53,6 +65,8 @@ provider "aws" {
       DataClassification = "${local.data_classification}"
       Compliance         = "${local.compliance}"
       Repository         = "${local.repository}"
+      Component          = "${local.component}"
+      Team               = "${local.team}"
       Owner              = "${local.owner}"
       Revision           = "${local.revision}"
       Lifecycle          = "persistent"
