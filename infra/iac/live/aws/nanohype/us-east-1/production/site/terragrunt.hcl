@@ -66,10 +66,26 @@ inputs = {
   site_bucket_name = "nanohype-docs-site-${local.account_id}"
 
   # The publish role for docs is owned by the standalone deploy component in
-  # nanohype.dev (github_repos includes nanohype/docs), so this module must not
-  # create a colliding role.
+  # nanohype.dev (its github_repositories includes nanohype/docs), so this module
+  # must not create a colliding role.
   create_deploy_role = false
-  github_repository  = "nanohype/docs"
+
+  # Required by the module whether or not it creates the role: both inputs are
+  # declared with no default, so omitting them fails the plan on a missing
+  # variable rather than being ignored alongside create_deploy_role = false.
+  #
+  # The value is the trust boundary — the numeric repository id from
+  # `gh api repos/OWNER/NAME --jq .id`, which survives a rename. The key is what
+  # a reader sees in the role description.
+  github_repositories = {
+    "nanohype/docs" = "1298572588"
+  }
+
+  # deploy.yml is the only workflow here that assumes a role, and every path into
+  # it resolves to main: the `workflow_run` trigger runs on the default branch,
+  # and `workflow_dispatch` is dispatched against it. ci.yml requests no id-token,
+  # so no pull-request subject is trusted.
+  github_sub_refs = ["ref:refs/heads/main"]
 
   content_security_policy = local.content_security_policy
 }

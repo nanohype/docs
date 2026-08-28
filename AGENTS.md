@@ -113,7 +113,7 @@ them sparsely, so no single directory is the parent of all five.
 ## Infra
 
 - Leaf: `infra/iac/live/aws/nanohype/us-east-1/production/site/`
-- Shared site module from landing-zone (`site-v1.3.0`); `create_deploy_role = false`
+- Shared site module from landing-zone (`site-v2.0.0`); `create_deploy_role = false`
   (publish role is shared with nanohype.dev)
 - No state-migration `moved` blocks — adoption is complete
 
