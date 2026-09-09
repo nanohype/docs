@@ -129,12 +129,17 @@ variable "optional_one" {
 output "echo" { value = "${var.required_one}-${var.optional_one}" }
 TF
 git -C "$mod" init -q
-git -C "$mod" -c user.email=t@t -c user.name=t add -A
-git -C "$mod" -c user.email=t@t -c user.name=t commit -qm one
+# Identity on the repository, not per command. An annotated tag records a TAGGER, so
+# `tag -a` needs one as much as `commit` does — and a CI runner has no ambient identity,
+# which fails the tag, leaves the ref absent, and fails every case that resolves it.
+git -C "$mod" config user.email t@t
+git -C "$mod" config user.name  t
+git -C "$mod" add -A
+git -C "$mod" commit -qm one
 git -C "$mod" tag -a v1.0.0 -m 'annotated'          # annotated: ls-remote peels it
 git -C "$mod" tag lightweight-v1.0.0                # lightweight: no peeled line
 sed -i.bak 's/required_one/required_two/g' "${mod}/mod/main.tf" && rm -f "${mod}/mod/main.tf.bak"
-git -C "$mod" -c user.email=t@t -c user.name=t commit -qam two
+git -C "$mod" commit -qam two
 git -C "$mod" tag -a v2.0.0 -m 'annotated'
 remote="file://${mod}/.git"
 
