@@ -58,7 +58,10 @@ inputs = {
   create_zone = false
   enable_www  = false
 
-  # name_prefix scopes the module's derived names (e.g. the OAC) for docs.
+  # Required by the module. Its three uses are the site-bucket fallback, the
+  # www-bucket fallback and the deploy role name — the bucket name is set below,
+  # enable_www is false and no role is created, so it governs nothing here. The OAC
+  # takes its name from the resolved site bucket, not from this prefix.
   name_prefix = "nanohype-docs-"
 
   # Account-qualified, and permanently so. S3 names are global; 351619759866
@@ -86,6 +89,12 @@ inputs = {
   # and `workflow_dispatch` is dispatched against it. ci.yml requests no id-token,
   # so no pull-request subject is trusted.
   github_sub_refs = ["ref:refs/heads/main"]
+
+  # The TXT RRset at docs.nanohype.dev, which is this site's own name and not the apex.
+  # nanohype.dev's Search Console token and its apex SPF belong to the site leaf in
+  # nanohype/nanohype.dev, which owns that name; a string published here would land on
+  # the subdomain and leave the apex as it was, with a clean plan either way.
+  domain_txt_records = []
 
   content_security_policy = local.content_security_policy
 }

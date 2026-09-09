@@ -113,9 +113,26 @@ them sparsely, so no single directory is the parent of all five.
 ## Infra
 
 - Leaf: `infra/iac/live/aws/nanohype/us-east-1/production/site/`
-- Shared site module from landing-zone (`site-v2.0.0`); `create_deploy_role = false`
+- Shared site module from landing-zone, pinned by tag in `_envcommon/aws/site.hcl`;
+  `create_deploy_role = false`
   (publish role is shared with nanohype.dev)
 - No state-migration `moved` blocks — adoption is complete
+- `ci.yml`'s `iac` job runs `./scripts/pin-drift.sh infra/iac/live`: it resolves the
+  `?ref=` against the module remote, checks it still points where
+  `infra/iac/live/module-pins.lock` records, and reads the leaf's inputs against
+  the variables that version declares. No AWS credentials
+- **Cut the tag on `stxkxs/landing-zone` before merging a pin bump.** A ref naming
+  a tag that does not exist cannot be fetched, so it fails at plan either way — the
+  gate moves that failure in front of a reviewer
+- **Bumping a ref is not a one-word edit** when the version changed its variable
+  surface; the leaf's inputs move in the same commit
+- `./scripts/pin-drift.sh infra/iac/live --plan` adds the layer that reads the
+  account, classifying each proposed change `DESTRUCTIVE`, `REVERTING` or
+  `ADVANCING`. It needs AWS read and runs from a workstation. State records which
+  resources exist and not which module version produced them, so a leaf pinned
+  behind the version that was applied plans a reversal that every credential-free
+  check calls green. Do not apply as tracked to clear one — pin the version the
+  account is running, and re-plan to empty
 
 ## Do not
 
