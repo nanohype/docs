@@ -190,6 +190,23 @@ jobs:
       # the variables that version declares. No AWS. The layer that answers what the
       # account is actually running is `--plan`, and it needs a read-only role in
       # that account — see AGENTS.md.
+      # L1 reads the module remote's tags and L2 fetches the module itself. Both are
+      # reads of a private repository, which a runner cannot do with its own token —
+      # the repository-scoped GITHUB_TOKEN reaches this repository and no other. The
+      # deploy key is read-only on the module remote and grants nothing here.
+      #
+      # Without it the gate refuses rather than passes: "L1 did not run, which is not
+      # the same as passing".
+      - name: Module remote read key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$MODULE_READ_KEY" > ~/.ssh/module_read
+          chmod 600 ~/.ssh/module_read
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          printf 'Host github.com\n  IdentityFile ~/.ssh/module_read\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+        env:
+          MODULE_READ_KEY: ${{ secrets.MODULE_READ_KEY }}
+
       - run: ./scripts/pin-drift.sh infra/iac/live
 
   merge-gate:
