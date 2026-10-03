@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@11.28.3",
   "engines": {
     "node": ">=24"
   },
@@ -20,8 +20,8 @@
     "format": "biome check --write ."
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.41.3",
-    "@nanohype/sdk": "^0.2.1",
+    "@astrojs/starlight": "^0.42.0",
+    "@nanohype/sdk": "^0.3.0",
     "@shuttering/starlight": "0.2.3",
     "astro": "^7.3.1",
     "sharp": "^0.35.4",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@biomejs/biome": "2.5.7",
+    "@biomejs/biome": "2.5.15",
     "@nanohype/error-pages": "^0.1.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
