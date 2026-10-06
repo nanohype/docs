@@ -1,0 +1,14 @@
+# Advisories with no fix reachable through the dependency that pulls them in.
+# Each entry names why it does not apply here and expires, so the scan raises it
+# again on its own: by then either a patched release is reachable or the entry
+# gets re-argued, not silently renewed.
+
+[[IgnoredVulns]]
+id = "GHSA-rj75-hqrm-r3gf"
+ignoreUntil = 2026-12-05T00:00:00Z
+reason = """
+postcss-selector-parser is fixed only in 7.1.6, and every path to it pins 6.x:
+postcss-nested 6.2.0 declares ^6.1.1, reached through @expressive-code/core
+0.44 from astro-expressive-code and @astrojs/starlight. It parses the
+selectors in this site's own CSS at build time, never untrusted input.
+"""
