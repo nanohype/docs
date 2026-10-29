@@ -3,11 +3,16 @@ dist
 .astro
 .DS_Store
 
-# Where CI checks the catalog and the atlas out so the generated reference and
-# the /atlas/ pages can be built. Locally the build reads the sibling checkouts
-# instead and never creates these.
+# Where CI checks the catalog, the atlas and the platform and fleet API
+# definitions out so the generated reference, the /atlas/ pages and the
+# /platform/resources/ reference can be built. Locally the build reads the
+# sibling checkouts instead and never creates these. Ignoring them also keeps
+# them out of `biome check`, which reads .gitignore: they are other repos'
+# files, formatted to those repos' rules.
 .org/
 .atlas/
+.platform/
+.fleet/
 
 # OpenTofu / Terragrunt
 .terragrunt-cache
