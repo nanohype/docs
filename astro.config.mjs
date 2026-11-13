@@ -105,11 +105,14 @@ export default defineConfig({
           ],
         },
         {
-          // Authored. The failure class a platform actually has, and the
+          // Authored. The failure class a platform actually has, the
           // per-repo runbooks for the failures that have a procedure rather
-          // than a shape.
+          // than a shape, and how to run the org's code against AWS Emulator.
           label: "Operating it",
-          items: [{ label: "How this fails", link: "/failure-modes/" }],
+          items: [
+            { label: "How this fails", link: "/failure-modes/" },
+            { label: "Running against AWS Emulator", link: "/aws-emulator/" },
+          ],
         },
         {
           label: "Reference",
