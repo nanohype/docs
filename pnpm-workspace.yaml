@@ -33,10 +33,11 @@
 # Both are answered the same way: resolve without the entry, and see what the
 # parent gives you on its own.
 
-# pnpm 11 holds a package for 24h after publish before it will install it. The
-# floor is there so this tree is never the first consumer of a compromised
-# publish — a hijacked package is usually caught and unpublished within hours,
-# and waiting costs nothing on a dependency nobody is blocked on.
+# pnpm holds a package for minimumReleaseAge minutes after publish before it
+# will install it. The floor is there so this tree is never the first consumer
+# of a compromised publish — a hijacked package is usually caught and
+# unpublished within hours, and waiting costs nothing on a dependency nobody is
+# blocked on.
 #
 # Neither half of that applies to @shuttering. It is first-party: published from
 # a repo under the same ownership as this one, deliberately, and announced. There
@@ -46,6 +47,16 @@
 # Scoped to @shuttering on purpose. @nanohype/* is published to the public
 # registry and consumed by people outside this org, so it keeps the floor and is
 # held to the same bar as any other public dependency.
+#
+# The floor is three days, the floor of the shared Renovate preset
+# (github>nanohype/.github), rather than pnpm 11's default of one. Renovate's
+# stability-days status covers the releases a pull request names. The
+# transitive packages that move when it regenerates this lockfile, in lock file
+# maintenance or the rebase of any dependency PR, are resolved by pnpm, so
+# pnpm's own floor is the only one that reaches them. Under the one-day default
+# a refresh can pin a release a day old while every status on the PR is green.
+minimumReleaseAge: 4320
+
 minimumReleaseAgeExclude:
   - '@shuttering/*'
 
