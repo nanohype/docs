@@ -6,6 +6,12 @@ import { defineConfig } from "astro/config";
 // https://astro.build/config
 export default defineConfig({
   site: "https://docs.nanohype.dev",
+  // Scoped component styles compile to :where() selectors, which carry no
+  // specificity, so the @shuttering/starlight overrides layered over
+  // Starlight's components (borderless link cards, accent-coloured pagination
+  // links) win on source order. Astro's default "attribute" strategy would
+  // outrank every one of them.
+  scopedStyleStrategy: "where",
   integrations: [
     starlight({
       title: "nanohype",
